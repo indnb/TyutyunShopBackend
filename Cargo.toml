@@ -1,0 +1,27 @@
+[package]
+name = "tyutyunserver"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+jsonwebtoken = "8.1.1"
+bcrypt = "0.10.1"
+dotenv = "0.15"
+syn = { version = "1.0", features = ["derive"] }
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "postgres", "macros", "chrono"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+tokio = { version = "1", features = ["full"] }
+dotenvy = "0.15.6"
+env_logger = "0.9"
+log = "0.4.22"
+thiserror = "1.0"
+sqlx-macros = "0.8.2"
+rocket_cors = "0.6.0"
+[build-dependencies]
+rocket = "0.5.0-rc.2"
+[package.metadata.sqlx]
+database = "postgres"
+sqlx = "0.8.2"
