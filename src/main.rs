@@ -4,14 +4,26 @@ mod data;
 mod error;
 mod query;
 mod database;
+mod utils;
+
 use crate::database::init_db_pool;
 use crate::query::user::user_query::{get_profile, login, registration, update_profile};
-use rocket_cors::{AllowedOrigins, CorsOptions};
-use std::env;
+use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
+use std::{env, fs};
+use std::path::Path;
 use std::str::FromStr;
+use crate::query::category::category_query::create_category;
+use crate::query::product::product_query::create_product;
+use crate::utils::constants::images_constants::PRODUCT_IMAGES;
+
 #[tokio::main]
 async fn main() {
     let db_pool = init_db_pool().await;
+
+    if !Path::new(PRODUCT_IMAGES).exists() {
+        fs::create_dir(PRODUCT_IMAGES).expect("Failed to create images directory");
+    }
+
     rocket(db_pool.unwrap()).await;
 }
 
@@ -39,25 +51,32 @@ async fn rocket(db_pool: sqlx::PgPool) {
         ..Default::default()
     };
 
+    use rocket_cors::{AllowedOrigins, AllowedHeaders, CorsOptions};
+
     let cors = CorsOptions {
-        allowed_origins: AllowedOrigins::some_exact(&["http://localhost:3000"]),
-        allowed_methods: ["GET", "POST"]
-            .iter()
-            .map(|s| FromStr::from_str(s).unwrap())
+        allowed_origins: AllowedOrigins::some_exact(&["http://localhost:3000", "http://127.0.0.1:3000"]),
+        allowed_methods: vec!["GET", "POST", "PUT", "DELETE"]
+            .into_iter()
+            .map(|s| s.parse().unwrap())
             .collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Content-Type"]),
         allow_credentials: true,
         ..Default::default()
-    }
-        .to_cors()
-        .expect("error while building CORS");
+    }.to_cors()
+        .expect("Error while building CORS");
+
 
     rocket::custom(config)
         .manage(db_pool)
+        .mount("/static", rocket::fs::FileServer::from(PRODUCT_IMAGES))
         .mount("/api", routes![
             registration,
             login,
             get_profile,
-            update_profile])
+            update_profile,
+            create_category,
+            create_product
+        ])
 
         .attach(cors)
         .launch()

@@ -21,6 +21,8 @@ thiserror = "1.0"
 sqlx-macros = "0.8.2"
 rocket_cors = "0.6.0"
 eyre = "0.6"
+base64 = "0.13.1"
+uuid = { version = "1.1", features = ["v4"] }
 [build-dependencies]
 rocket = "0.5.0-rc.2"
 [package.metadata.sqlx]

@@ -8,20 +8,20 @@ use std::env;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub life_time: usize,
-    pub user_id: i32,
+    pub exp: usize,
+    pub sub: i32,
 }
 
 impl Claims {
-    pub fn new(user_id: i32) -> Self {
+    pub fn new(sub: i32) -> Self {
         let expiration = Utc::now()
             .checked_add_signed(Duration::hours(24))
             .expect("valid timestamp")
             .timestamp() as usize;
 
         Claims {
-            life_time: expiration,
-            user_id,
+            exp: expiration,
+            sub: sub,
         }
     }
 }

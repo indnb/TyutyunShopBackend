@@ -51,13 +51,17 @@ pub async fn login(
 }
 
 #[get("/user/profile")]
-pub async fn get_profile(claims: Claims, db_pool: &State<PgPool>) -> Result<Json<UserProfile>, Status> {
+pub async fn get_profile(
+    claims: Claims,
+    db_pool: &State<PgPool>,
+) -> Result<Json<UserProfile>, Status> {
     let user = sqlx::query_as::<_, User>(
         r#"
         SELECT id, password_hash, username, first_name, last_name, email, phone_number, address
         FROM users WHERE id = $1
         "#
-    ).bind(claims.user_id)
+    )
+        .bind(claims.sub)
         .fetch_one(&**db_pool)
         .await
         .map_err(|_| Status::NotFound)?;
@@ -68,7 +72,7 @@ pub async fn get_profile(claims: Claims, db_pool: &State<PgPool>) -> Result<Json
         first_name: user.first_name.unwrap_or_default(),
         last_name: user.last_name.unwrap_or_default(),
         phone_number: user.phone_number.unwrap_or_default(),
-        address: "".to_string(),
+        address: user.address.unwrap_or_default(),
     }))
 }
 
@@ -107,10 +111,9 @@ pub async fn update_profile(
 ) -> Result<Json<&'static str>, ApiError> {
     let temp_user = user_data.into_inner();
 
-    let user_exists = sqlx::query!(
+    let user_exists = sqlx::query(
         "SELECT id FROM users WHERE id = $1",
-        claims.user_id
-    )
+    ).bind(claims.sub)
         .fetch_optional(&**db_pool)
         .await?
         .is_some();
@@ -137,7 +140,7 @@ pub async fn update_profile(
         .bind(temp_user.last_name)
         .bind(temp_user.phone_number)
         .bind(temp_user.address)
-        .bind(claims.user_id)
+        .bind(claims.sub)
         .execute(&**db_pool)
         .await?;
 
