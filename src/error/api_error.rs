@@ -10,6 +10,8 @@ pub enum ApiError {
     InternalServerError,
     #[error("User not unauthorized")]
     Unauthorized,
+    #[error("User didn`t find")]
+    BadRequest,
 }
 
 impl<'r> rocket::response::Responder<'r, 'static> for ApiError {

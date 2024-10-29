@@ -20,6 +20,7 @@ log = "0.4.22"
 thiserror = "1.0"
 sqlx-macros = "0.8.2"
 rocket_cors = "0.6.0"
+eyre = "0.6"
 [build-dependencies]
 rocket = "0.5.0-rc.2"
 [package.metadata.sqlx]

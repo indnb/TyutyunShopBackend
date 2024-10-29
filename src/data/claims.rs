@@ -8,8 +8,8 @@ use std::env;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub exp: usize,
-    pub sub: i32, // Это будет user ID
+    pub life_time: usize,
+    pub user_id: i32,
 }
 
 impl Claims {
@@ -20,8 +20,8 @@ impl Claims {
             .timestamp() as usize;
 
         Claims {
-            exp: expiration,
-            sub: user_id,
+            life_time: expiration,
+            user_id,
         }
     }
 }
@@ -30,7 +30,6 @@ impl<'r> FromRequest<'r> for Claims {
     type Error = ();
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        // Извлечение токена из заголовка Authorization
         let token = req
             .headers()
             .get_one("Authorization")
@@ -47,13 +46,13 @@ impl<'r> FromRequest<'r> for Claims {
                 ) {
                     Ok(token_data) => request::Outcome::Success(token_data.claims),
                     Err(e) => {
-                        warn!("Ошибка декодирования токена: {:?}", e); // Логирование ошибки
+                        warn!("Error decode token: {:?}", e);
                         request::Outcome::Error((Status::Unauthorized, ()))
                     }
                 }
             }
             None => {
-                warn!("Токен не найден в заголовке Authorization");
+                warn!("Token didn`t find in header \"Authorization\"");
                 request::Outcome::Error((Status::Unauthorized, ()))
             }
         }
