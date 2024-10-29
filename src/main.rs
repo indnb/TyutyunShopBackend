@@ -11,9 +11,8 @@ use crate::query::user::user_query::{get_profile, login, registration, update_pr
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use std::{env, fs};
 use std::path::Path;
-use std::str::FromStr;
 use crate::query::category::category_query::create_category;
-use crate::query::product::product_query::create_product;
+use crate::query::product::product_query::{create_product, get_product_image};
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 
 #[tokio::main]
@@ -51,8 +50,7 @@ async fn rocket(db_pool: sqlx::PgPool) {
         ..Default::default()
     };
 
-    use rocket_cors::{AllowedOrigins, AllowedHeaders, CorsOptions};
-
+    // Configure CORS
     let cors = CorsOptions {
         allowed_origins: AllowedOrigins::some_exact(&["http://localhost:3000", "http://127.0.0.1:3000"]),
         allowed_methods: vec!["GET", "POST", "PUT", "DELETE"]
@@ -62,22 +60,22 @@ async fn rocket(db_pool: sqlx::PgPool) {
         allowed_headers: AllowedHeaders::some(&["Authorization", "Content-Type"]),
         allow_credentials: true,
         ..Default::default()
-    }.to_cors()
+    }
+        .to_cors()
         .expect("Error while building CORS");
-
 
     rocket::custom(config)
         .manage(db_pool)
-        .mount("/static", rocket::fs::FileServer::from(PRODUCT_IMAGES))
+        .mount(format!("/{}",  PRODUCT_IMAGES), rocket::fs::FileServer::from(PRODUCT_IMAGES))
         .mount("/api", routes![
             registration,
             login,
             get_profile,
             update_profile,
             create_category,
-            create_product
+            create_product,
+            get_product_image
         ])
-
         .attach(cors)
         .launch()
         .await
