@@ -12,7 +12,8 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use std::{env, fs};
 use std::path::Path;
 use crate::query::category::category_query::create_category;
-use crate::query::product::product_query::{create_product, get_product_image};
+use crate::query::product::product_image_query::{create_product_image, get_product_image};
+use crate::query::product::product_query::create_product;
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 
 #[tokio::main]
@@ -73,8 +74,9 @@ async fn rocket(db_pool: sqlx::PgPool) {
             get_profile,
             update_profile,
             create_category,
+            create_product_image,
+            get_product_image,
             create_product,
-            get_product_image
         ])
         .attach(cors)
         .launch()

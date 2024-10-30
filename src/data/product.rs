@@ -4,8 +4,9 @@ use rocket::serde::{Deserialize, Serialize};
 pub struct Product {
     pub name: String,
     pub description: Option<String>,
-    pub primary_image_id: i32,
+    pub primary_image_id: Option<i32>,
     pub price: i32,
-    pub stock_quantity: i32,
-    pub size_id: i32,
+    pub stock_quantity: Option<i32>,
+    pub size_id: Option<i32>,
+    pub category_id: Option<i32>,
 }
