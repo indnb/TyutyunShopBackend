@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::PgPool;
-use crate::data::product::Product;
+use crate::data::product::product::Product;
 use crate::error::api_error::ApiError;
 
 #[post("/product", data = "<product>")]
@@ -24,8 +24,7 @@ pub async fn create_product(db_pool: &State<PgPool>, product: Json<Product>) -> 
         .bind(product.size_id)
         .execute(&**db_pool)
         .await
-        .expect("");
+        .expect("Error created product into database");
 
-
-    Ok(Json("Product successfully added"))
+    Ok(Json("Product successfully created"))
 }

@@ -2,7 +2,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::PgPool;
 use crate::error::api_error::ApiError;
-use crate::data::category::Category;
+use crate::data::product::category::Category;
 
 #[post("/category", data = "<category_data>")]
 pub async fn create_category(

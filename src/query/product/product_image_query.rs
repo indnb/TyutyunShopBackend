@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::error::api_error::ApiError;
 use std::fs;
 use rocket::serde::json::{json, Json};
-use crate::data::product_image::ProductImage;
+use crate::data::product::product_image::ProductImage;
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 
 #[post("/product_image", data = "<image_form>")]

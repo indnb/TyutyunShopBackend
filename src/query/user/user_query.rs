@@ -5,9 +5,9 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::PgPool;
-use crate::data::claims::Claims;
-use crate::data::login::{LoginRequest, LoginResponse};
-use crate::data::user::{TempUser, User, UserProfile};
+use crate::data::user::claims::Claims;
+use crate::data::user::login::{LoginRequest, LoginResponse};
+use crate::data::user::user::{TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
 
 #[post("/user/login", data = "<login_data>")]
