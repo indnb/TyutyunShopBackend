@@ -10,7 +10,7 @@ use crate::data::user_components::login::{LoginRequest, LoginResponse};
 use crate::data::user_components::user::{TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
 
-#[post("/user_components/login", data = "<login_data>")]
+#[post("/user/login", data = "<login_data>")]
 pub async fn login(
     db_pool: &State<PgPool>,
     login_data: Json<LoginRequest>,
@@ -50,7 +50,7 @@ pub async fn login(
     }))
 }
 
-#[get("/user_components/profile")]
+#[get("/user/profile")]
 pub async fn get_profile(
     claims: Claims,
     db_pool: &State<PgPool>,
@@ -76,7 +76,7 @@ pub async fn get_profile(
     }))
 }
 
-#[post("/user_components/registration", data = "<user_data>")]
+#[post("/user/registration", data = "<user_data>")]
 pub async fn registration(
     db_pool: &State<PgPool>,
     user_data: Json<TempUser>,
@@ -103,7 +103,7 @@ pub async fn registration(
     Ok(())
 }
 
-#[post("/user_components/update", data = "<user_data>")]
+#[post("/user/update", data = "<user_data>")]
 pub async fn update_profile(
     db_pool: &State<PgPool>,
     user_data: Json<TempUser>,

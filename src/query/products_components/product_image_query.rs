@@ -27,7 +27,7 @@ pub async fn create_product_image(db_pool: &State<PgPool>, image_form: Form<Prod
             INSERT INTO product_images (
              image_url, created_at, updated_at
             )
-            VALUES($1, NOW(). NOW())
+            VALUES($1, NOW(), NOW())
         "#
     ).bind(&image_filename)
         .execute(&**db_pool)
