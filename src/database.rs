@@ -47,7 +47,8 @@ pub async fn init_db_pool() -> Result<PgPool> {
         CREATE TABLE IF NOT EXISTS categories (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS product_images (
@@ -55,8 +56,9 @@ pub async fn init_db_pool() -> Result<PgPool> {
             product_id INT,
             image_url VARCHAR(255) NOT NULL,
             alt_text VARCHAR(255),
-            position INT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            position INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS product_sizes (
@@ -66,25 +68,27 @@ pub async fn init_db_pool() -> Result<PgPool> {
             M BOOLEAN DEFAULT FALSE,
             L BOOLEAN DEFAULT FALSE,
             XL BOOLEAN DEFAULT FALSE,
-            XXL BOOLEAN DEFAULT FALSE
+            XXL BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS products (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             description TEXT,
-            primary_image_id INT REFERENCES product_images(id) ON DELETE CASCADE,
+            primary_image_id INT REFERENCES product_images(id) ON DELETE SET NULL,
             price DECIMAL(10, 2) NOT NULL,
             stock_quantity INT NOT NULL DEFAULT 0,
             category_id INT REFERENCES categories(id) ON DELETE SET NULL,
-            size_id INT REFERENCES product_sizes(id) ON DELETE CASCADE,
+            size_id INT REFERENCES product_sizes(id) ON DELETE SET NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS shipping_addresses (
             id SERIAL PRIMARY KEY,
-            user_id INT REFERENCES users(id) ON DELETE CASCADE,
+            user_id INT REFERENCES users(id) ON DELETE SET NULL,
             order_id INT,
             address_line1 VARCHAR(255) NOT NULL,
             address_line2 VARCHAR(255),
@@ -104,7 +108,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
 
         CREATE TABLE IF NOT EXISTS orders (
             id SERIAL PRIMARY KEY,
-            user_id INT REFERENCES users(id) ON DELETE CASCADE,
+            user_id INT REFERENCES users(id) ON DELETE SET NULL,
             total_price DECIMAL(10, 2) NOT NULL,
             status VARCHAR(50) DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -113,7 +117,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
 
         CREATE TABLE IF NOT EXISTS order_items (
             id SERIAL PRIMARY KEY,
-            order_id INT REFERENCES orders(id) ON DELETE CASCADE,
+            order_id INT REFERENCES orders(id) ON DELETE SET NULL,
             product_id INT REFERENCES products(id),
             quantity INT NOT NULL,
             price DECIMAL(10, 2) NOT NULL,
@@ -122,7 +126,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
 
         CREATE TABLE IF NOT EXISTS payments (
             id SERIAL PRIMARY KEY,
-            order_id INT REFERENCES orders(id) ON DELETE CASCADE,
+            order_id INT REFERENCES orders(id) ON DELETE SET NULL,
             payment_method VARCHAR(50) NOT NULL,
             payment_status VARCHAR(50) DEFAULT 'pending',
             amount DECIMAL(10, 2) NOT NULL,

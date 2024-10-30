@@ -1,16 +1,12 @@
-use rocket::fs::TempFile;
-use rocket::serde::{Deserialize, Serialize};
-use rocket::data::Data;
 use rocket::form::Form;
 use rocket::State;
 use sqlx::{PgPool, Row};
 use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 use crate::error::api_error::ApiError;
 use std::fs;
 use rocket::serde::json::{json, Json};
-use crate::data::product::product_image::ProductImage;
+use crate::data::products_components::product_image::ProductImage;
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 
 #[post("/product_image", data = "<image_form>")]
@@ -29,12 +25,11 @@ pub async fn create_product_image(db_pool: &State<PgPool>, image_form: Form<Prod
     sqlx::query(
         r#"
             INSERT INTO product_images (
-             image_url, position, created_at
+             image_url, created_at, updated_at
             )
-            VALUES($1, $2, NOW())
+            VALUES($1, NOW(). NOW())
         "#
     ).bind(&image_filename)
-        .bind(&1)
         .execute(&**db_pool)
         .await
         .map_err(ApiError::DatabaseError)?;

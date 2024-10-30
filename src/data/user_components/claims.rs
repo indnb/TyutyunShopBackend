@@ -21,7 +21,7 @@ impl Claims {
 
         Claims {
             exp: expiration,
-            sub: sub,
+            sub,
         }
     }
 }

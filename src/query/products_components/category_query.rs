@@ -2,7 +2,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::PgPool;
 use crate::error::api_error::ApiError;
-use crate::data::product::category::Category;
+use crate::data::products_components::category::Category;
 
 #[post("/category", data = "<category_data>")]
 pub async fn create_category(
@@ -13,9 +13,9 @@ pub async fn create_category(
 
     sqlx::query(r#"
         INSERT INTO categories (
-            name, created_at
+            name, created_at, updated_at
         )
-        VALUES ($1, NOW())
+        VALUES ($1, NOW(), NOW())
     "#).bind(&category.name)
         .execute(&**db_pool)
         .await?;
