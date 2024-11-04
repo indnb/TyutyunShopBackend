@@ -1,14 +1,14 @@
-use std::env;
+use crate::data::user_components::claims::Claims;
+use crate::data::user_components::login::{LoginRequest, LoginResponse};
+use crate::data::user_components::user::{TempUser, User, UserProfile};
+use crate::error::api_error::ApiError;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::PgPool;
-use crate::data::user_components::claims::Claims;
-use crate::data::user_components::login::{LoginRequest, LoginResponse};
-use crate::data::user_components::user::{TempUser, User, UserProfile};
-use crate::error::api_error::ApiError;
+use std::env;
 
 #[post("/user/login", data = "<login_data>")]
 pub async fn login(
@@ -86,9 +86,9 @@ pub async fn registration(
     sqlx::query(
         r#"
         INSERT INTO users (
-            username, email, password_hash, first_name, last_name, phone_number, created_at, updated_at
+            username, email, password_hash, first_name, last_name, phone_number, role, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
         "#
     ).bind(&new_user.username)
         .bind(&new_user.email)
@@ -96,6 +96,7 @@ pub async fn registration(
         .bind(&new_user.first_name)
         .bind(&new_user.last_name)
         .bind(&new_user.phone_number)
+        .bind("USER")
         .execute(&**db_pool)
         .await
         .map_err(ApiError::DatabaseError)?;

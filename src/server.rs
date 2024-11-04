@@ -1,15 +1,15 @@
 extern crate rocket;
-use crate::query::products_components::category_query::create_category;
+use crate::query::products_components::category_query::{create_category, get_categories, get_category};
 use crate::query::products_components::product_image_query::{create_product_image, get_product_image};
-use crate::query::products_components::product_query::create_product;
-use crate::query::products_components::size::create_size;
+use crate::query::products_components::product_query::{create_product, get_product, get_product_category_id};
+use crate::query::products_components::size_query::create_size;
 use crate::query::user::user_query::{get_profile, login, registration, update_profile};
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
+use log::LevelFilter;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
+use sqlx::PgPool;
 use std::env;
 use std::net::IpAddr;
-use log::LevelFilter;
-use sqlx::PgPool;
 
 pub async fn set_up_rocket(db_pool: PgPool) {
     configure_logging();
@@ -77,7 +77,11 @@ async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors) {
                 create_product_image,
                 get_product_image,
                 create_product,
-                create_size
+                create_size,
+                get_product,
+                get_categories,
+                get_category,
+                get_product_category_id
             ],
         )
         .attach(cors)

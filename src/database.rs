@@ -1,7 +1,7 @@
-use sqlx::{PgPool, PgConnection, postgres::PgPoolOptions, Executor, Connection};
-use std::env;
 use dotenvy::dotenv;
 use eyre::Result;
+use sqlx::{postgres::PgPoolOptions, Connection, Executor, PgConnection, PgPool};
+use std::env;
 
 pub async fn init_db_pool() -> Result<PgPool> {
     dotenv().ok();
@@ -40,6 +40,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
             last_name VARCHAR(100),
             address VARCHAR(100),
             phone_number VARCHAR(20) UNIQUE,
+            role VARCHAR(100),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -78,7 +79,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
             name VARCHAR(255) NOT NULL,
             description TEXT,
             primary_image_id INT REFERENCES product_images(id) ON DELETE SET NULL,
-            price DECIMAL(10, 2) NOT NULL,
+            price REAL NOT NULL,
             stock_quantity INT NOT NULL DEFAULT 0,
             category_id INT REFERENCES categories(id) ON DELETE SET NULL,
             size_id INT REFERENCES product_sizes(id) ON DELETE SET NULL,
@@ -109,7 +110,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
         CREATE TABLE IF NOT EXISTS orders (
             id SERIAL PRIMARY KEY,
             user_id INT REFERENCES users(id) ON DELETE SET NULL,
-            total_price DECIMAL(10, 2) NOT NULL,
+            total_price REAL NOT NULL,
             status VARCHAR(50) DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -120,8 +121,8 @@ pub async fn init_db_pool() -> Result<PgPool> {
             order_id INT REFERENCES orders(id) ON DELETE SET NULL,
             product_id INT REFERENCES products(id),
             quantity INT NOT NULL,
-            price DECIMAL(10, 2) NOT NULL,
-            total_price DECIMAL(10, 2) GENERATED ALWAYS AS (quantity * price) STORED
+            price REAL NOT NULL,
+            total_price REAL GENERATED ALWAYS AS (quantity * price) STORED
         );
 
         CREATE TABLE IF NOT EXISTS payments (
@@ -129,7 +130,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
             order_id INT REFERENCES orders(id) ON DELETE SET NULL,
             payment_method VARCHAR(50) NOT NULL,
             payment_status VARCHAR(50) DEFAULT 'pending',
-            amount DECIMAL(10, 2) NOT NULL,
+            amount REAL NOT NULL,
             payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         "#

@@ -1,8 +1,8 @@
+use crate::data::products_components::size::Size;
+use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
-use crate::data::products_components::size::Size;
-use crate::error::api_error::ApiError;
 
 #[post("/size", data = "<size>")]
 pub async fn create_size(db_pool: &State<PgPool>, size: Json<Size>) -> Result<&'static str, ApiError> {

@@ -8,10 +8,10 @@ mod utils;
 mod server;
 
 use crate::database::init_db_pool;
-use crate::utils::constants::images_constants::PRODUCT_IMAGES;
-use std::path::Path;
-use std::fs;
 use crate::server::set_up_rocket;
+use crate::utils::constants::images_constants::PRODUCT_IMAGES;
+use std::fs;
+use std::path::Path;
 
 #[tokio::main]
 async fn main() {
