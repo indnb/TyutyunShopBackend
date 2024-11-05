@@ -6,7 +6,8 @@ use std::env;
 pub async fn init_db_pool() -> Result<PgPool> {
     dotenv().ok();
 
-    let main_database_url = env::var("MAIN_DATABASE_URL").expect("MAIN_DATABASE_URL must be set in the .env file");
+    let main_database_url =
+        env::var("MAIN_DATABASE_URL").expect("MAIN_DATABASE_URL must be set in the .env file");
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set in the .env file");
     let db_name = env::var("DATABASE_NAME").expect("DATABASE_NAME must be set in the .env file");
 

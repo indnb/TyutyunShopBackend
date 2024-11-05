@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate rocket;
 mod data;
+mod database;
 mod error;
 mod query;
-mod database;
-mod utils;
 mod server;
+mod utils;
 
 use crate::database::init_db_pool;
 use crate::server::set_up_rocket;
@@ -23,4 +23,3 @@ async fn main() {
 
     set_up_rocket(db_pool.unwrap()).await;
 }
-

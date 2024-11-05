@@ -1,2 +1,2 @@
-pub mod user_components;
 pub mod products_components;
+pub mod user_components;

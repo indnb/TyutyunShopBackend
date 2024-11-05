@@ -1,0 +1,11 @@
+[package]
+name = "tyutyun_client_tester"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = { version = "0.12.9", features = ["multipart", "cookies", "json", "stream"] }
+serde = { version = "1.0.214", features = ["derive"] }
+tokio = { version = "1.41.0", features = ["rt", "rt-multi-thread", "macros"] }
+serde_json = "1.0.132"
+dotenv = "0.15"

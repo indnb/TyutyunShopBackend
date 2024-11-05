@@ -10,7 +10,10 @@ use tokio::fs::File;
 use uuid::Uuid;
 
 #[post("/product_image", data = "<image_form>")]
-pub async fn create_product_image(db_pool: &State<PgPool>, image_form: Form<ProductImage<'_>>) -> Result<&'static str, ApiError> {
+pub async fn create_product_image(
+    db_pool: &State<PgPool>,
+    image_form: Form<ProductImage<'_>>,
+) -> Result<&'static str, ApiError> {
     let product_image = image_form.into_inner();
 
     let image_filename = format!("{}.png", Uuid::new_v4());
@@ -18,9 +21,17 @@ pub async fn create_product_image(db_pool: &State<PgPool>, image_form: Form<Prod
 
     fs::create_dir_all(PRODUCT_IMAGES).map_err(|_| ApiError::InternalServerError)?;
 
-    let mut file = File::create(&image_path).await.map_err(|_| ApiError::InternalServerError)?;
-    let mut image_file = product_image.image.open().await.map_err(|_| ApiError::InternalServerError)?;
-    tokio::io::copy(&mut image_file, &mut file).await.map_err(|_| ApiError::InternalServerError)?;
+    let mut file = File::create(&image_path)
+        .await
+        .map_err(|_| ApiError::InternalServerError)?;
+    let mut image_file = product_image
+        .image
+        .open()
+        .await
+        .map_err(|_| ApiError::InternalServerError)?;
+    tokio::io::copy(&mut image_file, &mut file)
+        .await
+        .map_err(|_| ApiError::InternalServerError)?;
 
     sqlx::query(
         r#"
@@ -28,33 +39,68 @@ pub async fn create_product_image(db_pool: &State<PgPool>, image_form: Form<Prod
              image_url, product_id, created_at, updated_at
             )
             VALUES($1, $2, NOW(), NOW())
-        "#
-    ).bind(&image_filename).
-        bind(&product_image.product_id)
-        .execute(&**db_pool)
-        .await
-        .map_err(ApiError::DatabaseError)?;
-
+        "#,
+    )
+    .bind(&image_filename)
+    .bind(product_image.product_id)
+    .execute(&**db_pool)
+    .await
+    .map_err(ApiError::DatabaseError)?;
 
     Ok("Product successfully created")
 }
 
 #[get("/product_image/<id>")]
-pub async fn get_product_image(db_pool: &State<PgPool>, id: i32) -> Result<Json<serde_json::Value>, ApiError> {
+pub async fn get_one_product_image(
+    db_pool: &State<PgPool>,
+    id: i32,
+) -> Result<Json<serde_json::Value>, ApiError> {
     let row = sqlx::query(
         r#"
             SELECT image_url
             FROM product_images
             WHERE id = $1
-        "#
-    ).bind(id)
-        .fetch_one(&**db_pool)
-        .await
-        .map_err(ApiError::DatabaseError)?;
+        "#,
+    )
+    .bind(id)
+    .fetch_one(&**db_pool)
+    .await
+    .map_err(ApiError::DatabaseError)?;
 
     let image_url: String = row.get("image_url");
 
     Ok(Json(json!({
         "image_url": format!("http://127.0.0.1:8181/{}/{}", PRODUCT_IMAGES, image_url)
     })))
+}
+
+#[get("/product_image_all/<product_id>")]
+pub async fn get_all_product_images(
+    db_pool: &State<PgPool>,
+    product_id: i32,
+) -> Result<Json<Vec<String>>, ApiError> {
+    let rows = sqlx::query(
+        r#"
+            SELECT image_url
+            FROM product_images
+            WHERE product_id = $1
+        "#,
+    )
+    .bind(product_id)
+    .fetch_all(&**db_pool)
+    .await
+    .map_err(ApiError::DatabaseError)?;
+
+    let image_urls: Vec<String> = rows
+        .iter()
+        .map(|row| {
+            format!(
+                "http://127.0.0.1:8181/{}/{}",
+                PRODUCT_IMAGES,
+                row.get::<String, _>("image_url")
+            )
+        })
+        .collect();
+
+    Ok(Json(image_urls))
 }

@@ -21,11 +21,12 @@ pub async fn login(
         r#"
         SELECT id, username, email, password_hash, first_name, last_name, phone_number, address
         FROM users WHERE email = $1
-        "#
-    ).bind(&login_data.email)
-        .fetch_one(&**db_pool)
-        .await
-        .map_err(|_| ApiError::NotFound)?;
+        "#,
+    )
+    .bind(&login_data.email)
+    .fetch_one(&**db_pool)
+    .await
+    .map_err(|_| ApiError::NotFound)?;
 
     let is_password_valid = verify(&login_data.password, &user.password_hash)
         .map_err(|_| ApiError::InternalServerError)?;
@@ -40,7 +41,8 @@ pub async fn login(
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(secret.as_ref()),
-    ).map_err(|_| ApiError::InternalServerError)?;
+    )
+    .map_err(|_| ApiError::InternalServerError)?;
 
     Ok(Json(LoginResponse {
         id: user.id,
@@ -59,12 +61,12 @@ pub async fn get_profile(
         r#"
         SELECT id, password_hash, username, first_name, last_name, email, phone_number, address
         FROM users WHERE id = $1
-        "#
+        "#,
     )
-        .bind(claims.sub)
-        .fetch_one(&**db_pool)
-        .await
-        .map_err(|_| Status::NotFound)?;
+    .bind(claims.sub)
+    .fetch_one(&**db_pool)
+    .await
+    .map_err(|_| Status::NotFound)?;
 
     Ok(Json(UserProfile {
         username: user.username,
@@ -112,9 +114,8 @@ pub async fn update_profile(
 ) -> Result<Json<&'static str>, ApiError> {
     let temp_user = user_data.into_inner();
 
-    let user_exists = sqlx::query(
-        "SELECT id FROM users WHERE id = $1",
-    ).bind(claims.sub)
+    let user_exists = sqlx::query("SELECT id FROM users WHERE id = $1")
+        .bind(claims.sub)
         .fetch_optional(&**db_pool)
         .await?
         .is_some();
@@ -134,16 +135,17 @@ pub async fn update_profile(
             address = $6,
             updated_at = NOW()
         WHERE id = $7
-        "#
-    ).bind(temp_user.username)
-        .bind(temp_user.email)
-        .bind(temp_user.first_name)
-        .bind(temp_user.last_name)
-        .bind(temp_user.phone_number)
-        .bind(temp_user.address)
-        .bind(claims.sub)
-        .execute(&**db_pool)
-        .await?;
+        "#,
+    )
+    .bind(temp_user.username)
+    .bind(temp_user.email)
+    .bind(temp_user.first_name)
+    .bind(temp_user.last_name)
+    .bind(temp_user.phone_number)
+    .bind(temp_user.address)
+    .bind(claims.sub)
+    .execute(&**db_pool)
+    .await?;
 
     Ok(Json("Data successfully updated"))
 }
