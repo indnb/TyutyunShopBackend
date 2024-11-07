@@ -5,6 +5,7 @@ mod database;
 mod error;
 mod query;
 mod server;
+mod tests;
 mod utils;
 
 use crate::database::init_db_pool;

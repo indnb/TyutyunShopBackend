@@ -23,6 +23,7 @@ rocket_cors = "0.6.0"
 eyre = "0.6"
 base64 = "0.13.1"
 uuid = { version = "1.1", features = ["v4"] }
+reqwest = { version = "0.12.9", features = ["multipart", "cookies", "json", "stream"] }
 [build-dependencies]
 rocket = "0.5.0-rc.2"
 [package.metadata.sqlx]
