@@ -4,24 +4,24 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-jsonwebtoken = "8.1.1"
-bcrypt = "0.10.1"
+jsonwebtoken = "9.3.0"
+bcrypt = "0.15.1"
 dotenv = "0.15"
-syn = { version = "1.0", features = ["derive"] }
+syn = { version = "2.0.87", features = ["derive"] }
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
-sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "postgres", "macros", "chrono"] }
+sqlx = { version = "0.8.2", features = ["runtime-tokio-native-tls", "postgres", "macros", "chrono"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15.6"
-env_logger = "0.9"
+env_logger = "0.11.5"
 log = "0.4.22"
-thiserror = "1.0"
+thiserror = "2.0.0"
 sqlx-macros = "0.8.2"
 rocket_cors = "0.6.0"
 eyre = "0.6"
-base64 = "0.13.1"
+base64 = "0.22.1"
 uuid = { version = "1.1", features = ["v4"] }
 reqwest = { version = "0.12.9", features = ["multipart", "cookies", "json", "stream"] }
 [build-dependencies]

@@ -240,11 +240,12 @@ mod test {
             .header("Authorization", auth_header)
             .json(&json!({
                 "product_id": 1,
-                "s": true,
-                "m": true,
-                "l": true,
-                "xl": true,
-                "xxl": false
+                "single_size": 100,
+                "s": 0,
+                "m": 0,
+                "l": 0,
+                "xl": 0,
+                "xxl": 0
             }));
         send_request(client, request).await?;
         Ok(())

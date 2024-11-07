@@ -14,9 +14,9 @@ pub async fn create_size(
     let row = sqlx::query(
         r#"
         INSERT INTO product_sizes (
-            product_id, s, m, l, xl, xxl
+            product_id, s, m, l, xl, xxl, single_size
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id
         "#,
     )
@@ -26,6 +26,7 @@ pub async fn create_size(
     .bind(size.l)
     .bind(size.xl)
     .bind(size.xxl)
+    .bind(size.single_size)
     .fetch_one(&**db_pool)
     .await
     .expect("Error creating size in the database");
@@ -62,6 +63,7 @@ pub async fn get_size(db_pool: &State<PgPool>, product_id: i32) -> Result<Json<S
 
     Ok(Json(Size {
         product_id: row.get("product_id"),
+        single_size: row.get("single_size"),
         s: row.get("s"),
         m: row.get("m"),
         l: row.get("l"),

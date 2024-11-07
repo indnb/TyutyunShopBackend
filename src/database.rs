@@ -66,11 +66,12 @@ pub async fn init_db_pool() -> Result<PgPool> {
         CREATE TABLE IF NOT EXISTS product_sizes (
             id SERIAL PRIMARY KEY,
             product_id INT,
-            S BOOLEAN DEFAULT FALSE,
-            M BOOLEAN DEFAULT FALSE,
-            L BOOLEAN DEFAULT FALSE,
-            XL BOOLEAN DEFAULT FALSE,
-            XXL BOOLEAN DEFAULT FALSE,
+            single_size INT DEFAULT 0,
+            S INT DEFAULT 0,
+            M INT DEFAULT 0,
+            L INT DEFAULT 0,
+            XL INT DEFAULT 0,
+            XXL INT DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
