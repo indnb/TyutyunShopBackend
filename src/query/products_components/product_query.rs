@@ -2,7 +2,7 @@ use crate::data::products_components::product::Product;
 use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
-use sqlx::{query, PgPool, Row};
+use sqlx::{PgPool, Row};
 
 #[post("/product", data = "<product>")]
 pub async fn create_product(
@@ -37,11 +37,11 @@ pub async fn create_product(
                 WHERE id=$2
         "#,
     )
-        .bind(product_id)
-        .bind(product.primary_image_id)
-        .execute(&**db_pool)
-        .await
-        .expect("Error updating product_images with product_id in the database");
+    .bind(product_id)
+    .bind(product.primary_image_id)
+    .execute(&**db_pool)
+    .await
+    .expect("Error updating product_images with product_id in the database");
 
     Ok(Json("Product successfully created"))
 }
@@ -76,25 +76,23 @@ pub async fn get_product_category_id(
     selected_id: Option<i32>,
 ) -> Result<Json<Vec<Product>>, ApiError> {
     let query = match (category_id, selected_id) {
-        (Some(id), None) => {
-            sqlx::query(
-                r#"
+        (Some(id), None) => sqlx::query(
+            r#"
             SELECT * FROM products
             WHERE category_id = $1
             "#,
-            ).bind(id)
-        }
-        (Some(id), Some(selected_id)) => {
-            sqlx::query(
-                r#"
+        )
+        .bind(id),
+        (Some(id), Some(selected_id)) => sqlx::query(
+            r#"
             SELECT * FROM products
             WHERE category_id = $1 AND id != $2
             "#,
-            ).bind(id).bind(selected_id)
-        }
-        _ => return Ok(Json(Vec::new()))
+        )
+        .bind(id)
+        .bind(selected_id),
+        _ => return Ok(Json(Vec::new())),
     };
-
 
     let products = query.fetch_all(&**db_pool).await?;
 

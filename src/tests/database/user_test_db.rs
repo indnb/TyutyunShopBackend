@@ -73,7 +73,7 @@ impl UserTest<'_> {
             }));
         let response_text = send_request(request).await?;
         let login_json: serde_json::Value = serde_json::from_str(&response_text).unwrap();
-        let token = login_json["token"].as_str().ok_or(ApiError::Unauthorized)?;
+        let token = login_json["token"].as_str().ok_or(ApiError::BadRequest)?;
         println!("Received JWT token: {}", token);
         Ok(token.to_string())
     }

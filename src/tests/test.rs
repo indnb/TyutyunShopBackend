@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test {
     use crate::database::init_db_pool;
+    use crate::error::api_error::ApiError;
     use crate::server::set_up_rocket;
     use crate::tests::database::products::cap_test_db::*;
     use crate::tests::database::products::hoodie_test_db::create_hoodie_black;
@@ -10,14 +11,13 @@ mod test {
     use crate::tests::database::user_test_db::*;
     use crate::utils::constants::images_constants::PRODUCT_IMAGES;
     use reqwest::Client;
-    use std::error::Error;
     use std::path::Path;
     use std::time::Duration;
     use std::{env, fs};
     use tokio::time::sleep;
 
     #[tokio::test]
-    async fn bootstrap_test() -> Result<(), Box<dyn Error>> {
+    async fn bootstrap_test() -> Result<(), ApiError> {
         dotenv::dotenv().ok();
         let db_pool = init_db_pool().await;
 
@@ -31,7 +31,10 @@ mod test {
 
         sleep(Duration::from_secs(1)).await;
 
-        let client = Client::builder().cookie_store(true).build()?;
+        let client = Client::builder()
+            .cookie_store(true)
+            .build()
+            .map_err(|_| ApiError::BadRequest)?;
 
         let base_url = format!(
             "http://{}:{}",

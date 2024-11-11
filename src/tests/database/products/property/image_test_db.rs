@@ -38,7 +38,7 @@ pub async fn upload_image<'a>(
 }
 async fn download_image_from_drive(file_id: &str) -> Result<Vec<u8>, ApiError> {
     let url = format!("https://drive.google.com/uc?export=download&id={}", file_id);
-    let response = reqwest::get(&url).await.unwrap();
-    let bytes = response.bytes().await.unwrap();
+    let response = reqwest::get(&url).await.map_err(|_| ApiError::BadRequest)?;
+    let bytes = response.bytes().await.map_err(|_| ApiError::BadRequest)?;
     Ok(bytes.to_vec())
 }
