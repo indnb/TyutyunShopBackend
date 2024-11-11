@@ -1,2 +1,2 @@
-pub mod constant_images;
+pub mod database;
 pub mod test;

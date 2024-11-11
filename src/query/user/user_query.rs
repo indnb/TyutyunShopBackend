@@ -94,7 +94,7 @@ pub async fn registration(
         "#
     ).bind(&new_user.username)
         .bind(&new_user.email)
-        .bind(hash(new_user.password, DEFAULT_COST).expect("password hash should be valid"))
+        .bind(hash(new_user.password.unwrap(), DEFAULT_COST).expect("password hash should be valid"))
         .bind(&new_user.first_name)
         .bind(&new_user.last_name)
         .bind(&new_user.phone_number)

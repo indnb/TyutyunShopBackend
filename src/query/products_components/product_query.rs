@@ -14,16 +14,15 @@ pub async fn create_product(
     let product_id = sqlx::query(
         r#"
                 INSERT INTO products(
-                    name, description, primary_image_id, price, stock_quantity, category_id, size_id, created_at, updated_at
+                    name, description, primary_image_id, price, category_id, size_id, created_at, updated_at
                 )
-                VALUES($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+                VALUES($1, $2, $3, $4, $5, $6, NOW(), NOW())
                 RETURNING id
         "#
     ).bind(product.name)
         .bind(product.description)
         .bind(product.primary_image_id)
         .bind(product.price)
-        .bind(product.stock_quantity)
         .bind(product.category_id)
         .bind(product.size_id)
         .fetch_one(&**db_pool)
@@ -50,7 +49,7 @@ pub async fn create_product(
 #[get("/product/<id>")]
 pub async fn get_product(db_pool: &State<PgPool>, id: i32) -> Result<Json<Product>, ApiError> {
     let row = sqlx::query(
-        r#"SELECT id, name, description, primary_image_id, price, stock_quantity, category_id, size_id, created_at, updated_at
+        r#"SELECT id, name, description, primary_image_id, price, category_id, size_id, created_at, updated_at
             FROM products WHERE id = $1"#
     ).bind(id)
         .fetch_one(&**db_pool)
@@ -63,7 +62,6 @@ pub async fn get_product(db_pool: &State<PgPool>, id: i32) -> Result<Json<Produc
         description: row.get("description"),
         primary_image_id: row.get("primary_image_id"),
         price: row.get("price"),
-        stock_quantity: row.get("stock_quantity"),
         category_id: row.get("category_id"),
         size_id: row.get("size_id"),
     };
@@ -99,7 +97,6 @@ pub async fn get_product_category_id(
                 description: product.get("description"),
                 primary_image_id: product.get("primary_image_id"),
                 price: product.get("price"),
-                stock_quantity: product.get("stock_quantity"),
                 size_id: product.get("size_id"),
                 category_id: product.get("category_id"),
             })

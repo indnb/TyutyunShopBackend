@@ -1,4 +1,5 @@
 extern crate rocket;
+use crate::query::orders::orders_query::place_new_order;
 use crate::query::products_components::category_query::{
     create_category, get_categories, get_category,
 };
@@ -98,7 +99,8 @@ async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors) {
                 get_categories,
                 get_category,
                 get_product_category_id,
-                get_size
+                get_size,
+                place_new_order
             ],
         )
         .attach(cors)

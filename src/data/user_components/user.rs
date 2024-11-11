@@ -17,7 +17,7 @@ pub struct User {
 pub struct TempUser {
     pub username: String,
     pub email: String,
-    pub password: String,
+    pub password: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub phone_number: Option<String>,

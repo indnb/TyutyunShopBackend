@@ -82,7 +82,6 @@ pub async fn init_db_pool() -> Result<PgPool> {
             description TEXT,
             primary_image_id INT REFERENCES product_images(id) ON DELETE SET NULL,
             price REAL NOT NULL,
-            stock_quantity INT NOT NULL DEFAULT 0,
             category_id INT REFERENCES categories(id) ON DELETE SET NULL,
             size_id INT REFERENCES product_sizes(id) ON DELETE SET NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -124,6 +123,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
             product_id INT REFERENCES products(id),
             quantity INT NOT NULL,
             price REAL NOT NULL,
+            size VARCHAR(5) DEFAULT NULL,
             total_price REAL GENERATED ALWAYS AS (quantity * price) STORED
         );
 
