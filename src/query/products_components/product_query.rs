@@ -37,7 +37,7 @@ pub async fn create_product(
                 WHERE id=$2
         "#,
     )
-    .bind(&product_id)
+    .bind(product_id)
     .bind(product.primary_image_id)
     .execute(&**db_pool)
     .await

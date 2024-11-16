@@ -43,6 +43,7 @@ impl UserTest<'_> {
                 "phone_number": "+380950000000",
                 "address": "Solomyanska 7",
                 "password": "123123",
+                "role": "admin"
             }));
         send_request(request).await?;
         Ok(())

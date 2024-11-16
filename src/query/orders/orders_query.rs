@@ -8,7 +8,7 @@ use sqlx::{PgPool, Row};
 pub async fn place_new_order(
     db_pool: &State<PgPool>,
     data_order: Json<DataOrder>,
-) -> Result<String, ApiError> {
+) -> Result<Json<Option<i32>>, ApiError> {
     let data_order = data_order.into_inner();
 
     let id: Option<i32> = sqlx::query(
@@ -48,7 +48,7 @@ pub async fn place_new_order(
         .map_err(ApiError::DatabaseError)?;
     }
 
-    Ok("New order succeed placed".to_string())
+    Ok(Json(id))
 }
 #[get("/orders?<status>")]
 pub async fn get_orders(

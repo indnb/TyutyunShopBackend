@@ -154,7 +154,7 @@ pub async fn update_profile(
             last_name = $4,
             phone_number = $5,
             address = $6,
-            admin = $8,
+            role = $8,
             updated_at = NOW()
         WHERE id = $7
         "#,
@@ -166,7 +166,7 @@ pub async fn update_profile(
     .bind(temp_user.phone_number)
     .bind(temp_user.address)
     .bind(claims.sub)
-    .bind(temp_user.role)
+    .bind(temp_user.role.unwrap_or("USER".to_string()))
     .execute(&**db_pool)
     .await?;
 

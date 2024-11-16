@@ -88,26 +88,6 @@ pub async fn init_db_pool() -> Result<PgPool> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
-        CREATE TABLE IF NOT EXISTS shipping_addresses (
-            id SERIAL PRIMARY KEY,
-            user_id INT REFERENCES users(id) ON DELETE SET NULL,
-            order_id INT,
-            address_line1 VARCHAR(255) NOT NULL,
-            address_line2 VARCHAR(255),
-            city VARCHAR(100) NOT NULL,
-            region VARCHAR(100) NOT NULL,
-            postal_index VARCHAR(5),
-            country VARCHAR(100) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            guest_first_name VARCHAR(100),
-            guest_last_name VARCHAR(100),
-            guest_phone_number VARCHAR(20),
-            CHECK (
-                (user_id IS NOT NULL) OR
-                (guest_first_name IS NOT NULL AND guest_last_name IS NOT NULL AND guest_phone_number IS NOT NULL)
-            )
-        );
-
         CREATE TABLE IF NOT EXISTS orders (
             id SERIAL PRIMARY KEY,
             user_id INT REFERENCES users(id) ON DELETE SET NULL DEFAULT NULL,
@@ -116,6 +96,17 @@ pub async fn init_db_pool() -> Result<PgPool> {
             online_payment BOOLEAN NOT NULL DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS shipping_addresses (
+            id SERIAL PRIMARY KEY,
+            order_id INT REFERENCES orders(id) ON DELETE SET NULL,
+            address VARCHAR(255) NOT NULL,
+            first_name VARCHAR(100),
+            last_name VARCHAR(100),
+            phone_number VARCHAR(20),
+            email VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS order_items (
@@ -136,8 +127,9 @@ pub async fn init_db_pool() -> Result<PgPool> {
             amount REAL NOT NULL,
             payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        "#
-    ).await?;
+        "#,
+    )
+    .await?;
 
     Ok(pool)
 }
