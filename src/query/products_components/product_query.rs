@@ -46,44 +46,29 @@ pub async fn create_product(
     Ok(Json("Product successfully created"))
 }
 
-#[get("/product/<id>")]
-pub async fn get_product(db_pool: &State<PgPool>, id: i32) -> Result<Json<Product>, ApiError> {
-    let row = sqlx::query(
-        r#"SELECT id, name, description, primary_image_id, price, category_id, size_id, created_at, updated_at
-            FROM products WHERE id = $1"#
-    ).bind(id)
-        .fetch_one(&**db_pool)
-        .await
-        .map_err(|_| ApiError::NotFound)?;
-
-    let product = Product {
-        id: row.get("id"),
-        name: row.get("name"),
-        description: row.get("description"),
-        primary_image_id: row.get("primary_image_id"),
-        price: row.get("price"),
-        category_id: row.get("category_id"),
-        size_id: row.get("size_id"),
-    };
-
-    Ok(Json(product))
-}
-
-#[get("/product?<category_id>&<selected_id>")]
-pub async fn get_product_category_id(
+#[get("/product?<category_id>&<selected_id>&<product_id>")]
+pub async fn get_products(
     db_pool: &State<PgPool>,
     category_id: Option<i32>,
     selected_id: Option<i32>,
+    product_id: Option<i32>,
 ) -> Result<Json<Vec<Product>>, ApiError> {
-    let query = match (category_id, selected_id) {
-        (Some(id), None) => sqlx::query(
+    let query = match (category_id, selected_id, product_id) {
+        (None, None, Some(id)) => sqlx::query(
+            r#"
+            SELECT * FROM products
+            WHERE id = $1
+            "#,
+        )
+        .bind(id),
+        (Some(id), None, None) => sqlx::query(
             r#"
             SELECT * FROM products
             WHERE category_id = $1
             "#,
         )
         .bind(id),
-        (Some(id), Some(selected_id)) => sqlx::query(
+        (Some(id), Some(selected_id), None) => sqlx::query(
             r#"
             SELECT * FROM products
             WHERE category_id = $1 AND id != $2
@@ -91,7 +76,11 @@ pub async fn get_product_category_id(
         )
         .bind(id)
         .bind(selected_id),
-        _ => return Ok(Json(Vec::new())),
+        _ => sqlx::query(
+            r#"
+            SELECT * FROM products
+            "#,
+        ),
     };
 
     let products = query.fetch_all(&**db_pool).await?;

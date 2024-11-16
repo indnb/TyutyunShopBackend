@@ -12,6 +12,12 @@ pub enum ApiError {
     Unauthorized,
     #[error("User didn`t find")]
     BadRequest,
+    #[allow(dead_code)]
+    #[error("Http error")]
+    HttpError(String),
+    #[allow(dead_code)]
+    #[error("Payment didn`t succeed")]
+    PaymentError(String),
 }
 
 impl<'r> rocket::response::Responder<'r, 'static> for ApiError {

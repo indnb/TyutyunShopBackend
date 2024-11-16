@@ -19,7 +19,9 @@ pub async fn create_product<'a>(
 
 #[allow(dead_code)]
 pub async fn get_product_by_id<'a>(user: &UserTest<'a>) -> Result<(), ApiError> {
-    let request = user.client.get(format!("{}/api/product/1", user.base_url));
+    let request = user
+        .client
+        .get(format!("{}/api/product?product_id=1", user.base_url));
     send_request(request).await?;
     Ok(())
 }

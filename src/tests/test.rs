@@ -54,7 +54,6 @@ mod test {
         create_t_shirt_white(&user_test).await?;
         create_category(&user_test, "Худі").await?;
         create_hoodie_black(&user_test).await?;
-
         get_product_by_id(&user_test).await?;
 
         Ok(())

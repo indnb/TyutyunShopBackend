@@ -21,10 +21,12 @@ pub struct TempUser {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub phone_number: Option<String>,
+    pub role: Option<String>,
     pub address: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserProfile {
+    pub id: Option<i32>,
     pub username: String,
     pub email: String,
     pub first_name: String,

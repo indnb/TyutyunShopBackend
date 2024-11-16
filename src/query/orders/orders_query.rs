@@ -1,4 +1,4 @@
-use crate::data::orders::order::DataOrder;
+use crate::data::orders::order::{DataOrder, Order};
 use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -14,15 +14,16 @@ pub async fn place_new_order(
     let id: Option<i32> = sqlx::query(
         r#"
             INSERT INTO orders (
-                user_id, total_price, status, created_at, updated_at
+                user_id, total_price, status, online_payment, created_at, updated_at
             )
-            VALUES ($1, $2, $3, NOW(), NOW())
+            VALUES ($1, $2, $3, $4, NOW(), NOW())
             RETURNING id
         "#,
     )
     .bind(data_order.order.user_id)
     .bind(data_order.order.total_price)
-    .bind(&data_order.order.status)
+    .bind(data_order.order.status)
+    .bind(data_order.order.online_payment)
     .fetch_one(&**db_pool)
     .await
     .map_err(ApiError::DatabaseError)?
@@ -48,4 +49,42 @@ pub async fn place_new_order(
     }
 
     Ok("New order succeed placed".to_string())
+}
+#[get("/orders?<status>")]
+pub async fn get_orders(
+    db_pool: &State<PgPool>,
+    status: Option<String>,
+) -> Result<Json<Vec<Order>>, ApiError> {
+    let orders = match status {
+        Some(status) => sqlx::query(
+            r#"
+           SELECT * FROM orders WHERE status = $1
+        "#,
+        )
+        .bind(status)
+        .fetch_all(&**db_pool)
+        .await
+        .map_err(ApiError::DatabaseError)?,
+        _ => sqlx::query(
+            r#"
+           SELECT * FROM orders
+        "#,
+        )
+        .fetch_all(&**db_pool)
+        .await
+        .map_err(ApiError::DatabaseError)?,
+    };
+
+    Ok(Json(
+        orders
+            .into_iter()
+            .map(|row| Order {
+                id: row.get("id"),
+                user_id: row.get("user_id"),
+                total_price: row.get("total_price"),
+                status: row.get("status"),
+                online_payment: row.get("online_payment"),
+            })
+            .collect::<Vec<Order>>(),
+    ))
 }

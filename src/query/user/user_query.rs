@@ -1,5 +1,5 @@
+use crate::data::user_components::authorization::{LoginRequest, LoginResponse, RoleResponse};
 use crate::data::user_components::claims::Claims;
-use crate::data::user_components::login::{LoginRequest, LoginResponse};
 use crate::data::user_components::user::{TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
 use bcrypt::{hash, verify, DEFAULT_COST};
@@ -7,9 +7,30 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use std::env;
+#[get("/user/role")]
+pub async fn get_user_role(
+    db_pool: &State<PgPool>,
+    claims: Claims,
+) -> Result<Json<RoleResponse>, Status> {
+    let result = sqlx::query(
+        r#"
+        SELECT role FROM users WHERE id = $1
+        "#,
+    )
+    .bind(claims.sub)
+    .fetch_one(&**db_pool)
+    .await
+    .map_err(|_| ApiError::Unauthorized);
 
+    match result {
+        Ok(record) => Ok(Json(RoleResponse {
+            role: record.get("role"),
+        })),
+        Err(_) => Err(Status::InternalServerError),
+    }
+}
 #[post("/user/login", data = "<login_data>")]
 pub async fn login(
     db_pool: &State<PgPool>,
@@ -19,8 +40,7 @@ pub async fn login(
 
     let user = sqlx::query_as::<_, User>(
         r#"
-        SELECT id, username, email, password_hash, first_name, last_name, phone_number, address
-        FROM users WHERE email = $1
+        SELECT * FROM users WHERE email = $1
         "#,
     )
     .bind(&login_data.email)
@@ -69,6 +89,7 @@ pub async fn get_profile(
     .map_err(|_| Status::NotFound)?;
 
     Ok(Json(UserProfile {
+        id: Option::from(user.id),
         username: user.username,
         email: user.email,
         first_name: user.first_name.unwrap_or_default(),
@@ -92,13 +113,13 @@ pub async fn registration(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
         "#
-    ).bind(&new_user.username)
-        .bind(&new_user.email)
+    ).bind(new_user.username)
+        .bind(new_user.email)
         .bind(hash(new_user.password.unwrap(), DEFAULT_COST).expect("password hash should be valid"))
-        .bind(&new_user.first_name)
-        .bind(&new_user.last_name)
-        .bind(&new_user.phone_number)
-        .bind("USER")
+        .bind(new_user.first_name)
+        .bind(new_user.last_name)
+        .bind(new_user.phone_number)
+        .bind(new_user.role.unwrap_or("USER".to_string()))
         .execute(&**db_pool)
         .await
         .map_err(ApiError::DatabaseError)?;
@@ -133,6 +154,7 @@ pub async fn update_profile(
             last_name = $4,
             phone_number = $5,
             address = $6,
+            admin = $8,
             updated_at = NOW()
         WHERE id = $7
         "#,
@@ -144,6 +166,7 @@ pub async fn update_profile(
     .bind(temp_user.phone_number)
     .bind(temp_user.address)
     .bind(claims.sub)
+    .bind(temp_user.role)
     .execute(&**db_pool)
     .await?;
 

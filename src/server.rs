@@ -1,18 +1,19 @@
 extern crate rocket;
-use crate::query::orders::orders_query::place_new_order;
+use crate::query::orders::orders_query::{get_orders, place_new_order};
 use crate::query::products_components::category_query::{
     create_category, get_categories, get_category,
 };
 use crate::query::products_components::product_image_query::{
-    create_product_image, get_all_product_images, get_one_product_image,
+    create_product_image, delete_product_image_by_id, get_all_product_images, get_one_product_image,
 };
-use crate::query::products_components::product_query::{
-    create_product, get_product, get_product_category_id,
-};
+use crate::query::products_components::product_query::{create_product, get_products};
 use crate::query::products_components::size_query::{create_size, get_size};
-use crate::query::user::user_query::{get_profile, login, registration, update_profile};
+use crate::query::user::user_query::{
+    get_profile, get_user_role, login, registration, update_profile,
+};
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use log::LevelFilter;
+use reqwest::Client;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 use sqlx::PgPool;
 use std::env;
@@ -23,8 +24,8 @@ pub async fn set_up_rocket(db_pool: PgPool) {
 
     let config = get_server_config();
     let cors = configure_cors();
-
-    build_rocket(db_pool, config, cors).await;
+    let client = Client::new();
+    build_rocket(db_pool, config, cors, client).await;
 }
 
 fn configure_logging() {
@@ -75,9 +76,10 @@ fn configure_cors() -> Cors {
     .expect("Error while building CORS")
 }
 
-async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors) {
+async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors, client: Client) {
     rocket::custom(config)
         .manage(db_pool)
+        .manage(client)
         .mount(
             format!("/{}", PRODUCT_IMAGES),
             rocket::fs::FileServer::from(PRODUCT_IMAGES),
@@ -95,12 +97,14 @@ async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors) {
                 get_all_product_images,
                 create_product,
                 create_size,
-                get_product,
                 get_categories,
                 get_category,
-                get_product_category_id,
+                get_products,
                 get_size,
-                place_new_order
+                place_new_order,
+                get_user_role,
+                delete_product_image_by_id,
+                get_orders,
             ],
         )
         .attach(cors)

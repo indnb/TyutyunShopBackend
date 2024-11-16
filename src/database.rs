@@ -41,7 +41,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
             last_name VARCHAR(100),
             address VARCHAR(100),
             phone_number VARCHAR(20) UNIQUE,
-            role VARCHAR(100),
+            role VARCHAR(20) NOT NULL DEFAULT USER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -110,9 +110,10 @@ pub async fn init_db_pool() -> Result<PgPool> {
 
         CREATE TABLE IF NOT EXISTS orders (
             id SERIAL PRIMARY KEY,
-            user_id INT REFERENCES users(id) ON DELETE SET NULL,
+            user_id INT REFERENCES users(id) ON DELETE SET NULL DEFAULT NULL,
             total_price REAL NOT NULL,
             status VARCHAR(50) DEFAULT 'pending',
+            online_payment BOOLEAN NOT NULL DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -123,7 +124,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
             product_id INT REFERENCES products(id),
             quantity INT NOT NULL,
             price REAL NOT NULL,
-            size VARCHAR(5) DEFAULT NULL,
+            size VARCHAR(25) DEFAULT NULL,
             total_price REAL GENERATED ALWAYS AS (quantity * price) STORED
         );
 

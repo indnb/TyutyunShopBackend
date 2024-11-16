@@ -36,13 +36,13 @@ impl UserTest<'_> {
             .post(format!("{}/api/user/update", self.base_url))
             .header("Authorization", self.auth_header.as_str())
             .json(&json!({
-                "username": "lol_updated",
-                "email": "lol_updated@gmail.com",
-                "first_name": "Updated",
-                "last_name": "User",
-                "phone_number": "999999999",
-                "address": "Updated Address",
-                "password": "123123"
+                "username": "admin",
+                "email": "admin",
+                "first_name": "Vlad",
+                "last_name": "Lavrishko",
+                "phone_number": "+380950000000",
+                "address": "Solomyanska 7",
+                "password": "123123",
             }));
         send_request(request).await?;
         Ok(())
@@ -52,13 +52,14 @@ impl UserTest<'_> {
         let request = client
             .post(format!("{}/api/user/registration", base_url))
             .json(&json!({
-                "username": "lol",
-                "email": "lol@gmail.com",
-                "first_name": "123123",
-                "last_name": "123123",
-                "phone_number": "1231232",
+                "username": "admin",
+                "email": "admin",
+                "first_name": "Vlad",
+                "last_name": "Lavrishko",
+                "phone_number": "+380660000000",
                 "password": "123123",
-                "address": ""
+                "address": "",
+                "role": "ADMIN"
             }));
         send_request(request).await?;
         Ok(())
@@ -68,7 +69,7 @@ impl UserTest<'_> {
         let request = client
             .post(format!("{}/api/user/login", base_url))
             .json(&json!({
-                "email": "lol@gmail.com",
+                "email": "admin",
                 "password": "123123"
             }));
         let response_text = send_request(request).await?;
