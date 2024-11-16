@@ -63,3 +63,24 @@ pub async fn get_category(db_pool: &State<PgPool>, id: i32) -> Result<Json<Categ
         name: category_rows.get("name"),
     }))
 }
+#[put("/category/<id>", data = "<name>")]
+pub async fn update_category_name(db_pool: &State<PgPool>, name : Json<serde_json::Value>, id: i32) -> Result<String, ApiError> {
+    let name = name
+        .get("name")
+        .and_then(serde_json::Value::as_str)
+        .ok_or(ApiError::BadRequest)?;
+
+    sqlx::query(
+        r#"
+        UPDATE categories
+        SET name = $2
+        WHERE id = $1
+        "#,
+    )
+        .bind(id)
+        .bind(name)
+        .execute(&**db_pool)
+        .await?;
+
+    Ok("Category successfully updated".to_string())
+}

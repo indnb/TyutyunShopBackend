@@ -36,7 +36,8 @@ pub async fn get_shipping_by_id(
 ) -> Result<Json<Shipping>, ApiError> {
     let shipping = sqlx::query_as::<_, Shipping>(
         r#"
-            SELECT * FROM shipping_address
+            SELECT order_id, address, first_name, last_name, phone_number, email
+            FROM shipping_addresses
             WHERE order_id = $1
         "#,
     )

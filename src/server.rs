@@ -1,9 +1,7 @@
 extern crate rocket;
-use crate::query::orders::orders_query::{get_orders, place_new_order};
+use crate::query::orders::orders_query::{delete_order, get_order_details, get_orders, place_new_order, update_order_status};
 use crate::query::orders::shipping_query::{add_shipping, get_shipping_by_id};
-use crate::query::products_components::category_query::{
-    create_category, get_categories, get_category,
-};
+use crate::query::products_components::category_query::{create_category, get_categories, get_category, update_category_name};
 use crate::query::products_components::product_image_query::{
     create_product_image, delete_product_image_by_id, get_all_product_images, get_one_product_image,
 };
@@ -107,7 +105,11 @@ async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors, clien
                 delete_product_image_by_id,
                 get_orders,
                 get_shipping_by_id,
-                add_shipping
+                add_shipping,
+                get_order_details,
+                update_order_status,
+                delete_order,
+                update_category_name
             ],
         )
         .attach(cors)
