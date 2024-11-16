@@ -8,7 +8,7 @@ use sqlx::{PgPool, Row};
 pub async fn create_product(
     db_pool: &State<PgPool>,
     product: Json<Product>,
-) -> Result<Json<&'static str>, ApiError> {
+) -> Result<Json<i32>, ApiError> {
     let product = product.into_inner();
 
     let product_id = sqlx::query(
@@ -37,13 +37,13 @@ pub async fn create_product(
                 WHERE id=$2
         "#,
     )
-    .bind(product_id)
+    .bind(&product_id)
     .bind(product.primary_image_id)
     .execute(&**db_pool)
     .await
     .expect("Error updating product_images with product_id in the database");
 
-    Ok(Json("Product successfully created"))
+    Ok(Json(product_id))
 }
 
 #[get("/product?<category_id>&<selected_id>&<product_id>")]
