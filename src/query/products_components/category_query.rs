@@ -84,3 +84,17 @@ pub async fn update_category_name(db_pool: &State<PgPool>, name : Json<serde_jso
 
     Ok("Category successfully updated".to_string())
 }
+#[delete("/category/<id>")]
+pub async fn delete_category_by_id(db_pool: &State<PgPool>, id: i32) -> Result<String, ApiError> {
+    sqlx::query(
+        r#"
+        DELETE FROM categories
+        WHERE id = $1
+        "#,
+    )
+        .bind(id)
+        .execute(&**db_pool)
+        .await?;
+
+    Ok("Category successfully deleted".to_string())
+}
