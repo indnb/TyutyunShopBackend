@@ -3,12 +3,15 @@ use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
+use crate::data::user_components::claims::Claims;
 
 #[post("/size", data = "<size>")]
 pub async fn create_size(
     db_pool: &State<PgPool>,
     size: Json<Size>,
+    claims: Claims
 ) -> Result<&'static str, ApiError> {
+    claims.check_admin()?;
     let size = size.into_inner();
 
     let row = sqlx::query(

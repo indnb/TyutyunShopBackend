@@ -10,6 +10,7 @@ pub struct User {
     pub last_name: Option<String>,
     pub phone_number: Option<String>,
     pub address: Option<String>,
+    pub role: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

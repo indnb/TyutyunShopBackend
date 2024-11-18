@@ -3,12 +3,15 @@ use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
+use crate::data::user_components::claims::Claims;
 
 #[post("/product", data = "<product>")]
 pub async fn create_product(
     db_pool: &State<PgPool>,
     product: Json<Product>,
+    claims: Claims,
 ) -> Result<Json<i32>, ApiError> {
+    claims.check_admin()?;
     let product = product.into_inner();
 
     let product_id = sqlx::query(

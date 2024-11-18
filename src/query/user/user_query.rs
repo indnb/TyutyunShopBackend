@@ -59,9 +59,9 @@ pub async fn login(
     }
 
     let secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set in .env");
-    let claims = Claims::new(user.id);
+    let claims = Claims::new(user.id, user.role);
     let token = encode(
-        &Header::default(),
+        &Header::new(Algorithm::HS512),
         &claims,
         &EncodingKey::from_secret(secret.as_ref()),
     )
@@ -77,19 +77,18 @@ pub async fn login(
 
 #[get("/user/profile")]
 pub async fn get_profile(
-    claims: Claims,
     db_pool: &State<PgPool>,
-) -> Result<Json<UserProfile>, Status> {
+    claims: Claims,
+) -> Result<Json<UserProfile>, ApiError> {
     let user = sqlx::query_as::<_, User>(
         r#"
-        SELECT id, password_hash, username, first_name, last_name, email, phone_number, address
+        SELECT id, password_hash, username, first_name, last_name, email, phone_number, address, role
         FROM users WHERE id = $1
         "#,
     )
     .bind(claims.sub)
     .fetch_one(&**db_pool)
-    .await
-    .map_err(|_| Status::NotFound)?;
+    .await?;
 
     Ok(Json(UserProfile {
         id: Option::from(user.id),

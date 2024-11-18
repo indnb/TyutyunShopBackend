@@ -6,6 +6,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use serde_json::Value;
 use sqlx::{PgPool, Row};
+use crate::data::user_components::claims::Claims;
 
 #[post("/order", data = "<data_order>")]
 pub async fn place_new_order(
@@ -152,7 +153,10 @@ pub async fn update_order_status(
     db_pool: &State<PgPool>,
     status: Json<Value>,
     id: i32,
+    claims: Claims
 ) -> Result<String, ApiError> {
+    claims.check_admin()?;
+
     let status = status
         .get("status")
         .and_then(Value::as_str)
@@ -173,7 +177,8 @@ pub async fn update_order_status(
     Ok("Succeed update status".to_string())
 }
 #[delete("/order/<id>")]
-pub async fn delete_order(db_pool: &State<PgPool>, id: i32) -> Result<String, ApiError> {
+pub async fn delete_order(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
+    claims.check_admin()?;
     sqlx::query(
         r#"
             DELETE FROM orders

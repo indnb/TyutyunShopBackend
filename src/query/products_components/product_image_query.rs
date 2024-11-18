@@ -1,20 +1,27 @@
 use crate::data::products_components::product_image::{NewProductImage, ProductImage};
+use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use dotenv::dotenv;
 use rocket::form::Form;
+use rocket::http::Status;
+use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
-use rocket::State;
+use rocket::{Request, State};
+use serde::Deserialize;
 use sqlx::{PgPool, Row};
 use std::{env, fs};
 use tokio::fs::File;
 use uuid::Uuid;
+use crate::data::user_components::claims;
 
 #[post("/product_image", data = "<image_form>")]
 pub async fn create_product_image(
     db_pool: &State<PgPool>,
     image_form: Form<NewProductImage<'_>>,
+    claims: Claims
 ) -> Result<&'static str, ApiError> {
+    claims.check_admin()?;
     let product_image = image_form.into_inner();
 
     let image_filename = format!("{}.png", Uuid::new_v4());
@@ -84,7 +91,9 @@ pub async fn get_one_product_image(
 pub async fn delete_product_image_by_id(
     db_pool: &State<PgPool>,
     id: i32,
+    claims: Claims,
 ) -> Result<Json<String>, ApiError> {
+    claims.check_admin()?;
     let path = sqlx::query("SELECT image_url FROM product_images WHERE id = $1")
         .bind(id)
         .fetch_one(&**db_pool)
