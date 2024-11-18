@@ -72,7 +72,7 @@ pub async fn get_one_product_image(
     let image_url: String = format!(
         "http://{}:{}/{}/{}",
         env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
-        env::var("PORT").unwrap_or("8181".to_string()),
+        env::var("SERVER_PORT").unwrap_or("8181".to_string()),
         PRODUCT_IMAGES,
         row.get::<String, &str>("image_url")
     );
@@ -152,7 +152,7 @@ pub async fn get_all_product_images(
             image_url: format!(
                 "http://{}:{}/{}/{}",
                 env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
-                env::var("PORT").unwrap_or("8181".to_string()),
+                env::var("SERVER_PORT").unwrap_or("8181".to_string()),
                 PRODUCT_IMAGES,
                 row.get::<String, _>("image_url")
             ),

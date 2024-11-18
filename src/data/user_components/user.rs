@@ -1,6 +1,5 @@
 use rocket::serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub id: i32,
@@ -24,6 +23,20 @@ pub struct TempUser {
     pub role: Option<String>,
     pub address: Option<String>,
 }
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct JwtUser {
+    pub username: String,
+    pub email: String,
+    pub password: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub phone_number: Option<String>,
+    pub role: Option<String>,
+    pub address: Option<String>,
+    pub exp: usize,
+}
+
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserProfile {
     pub id: Option<i32>,

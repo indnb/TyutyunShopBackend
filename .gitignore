@@ -21,3 +21,5 @@ Cargo.lock
 #.idea/
 .env
 products_images
+cert.pem
+key.pem

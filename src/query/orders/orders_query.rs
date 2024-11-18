@@ -153,10 +153,10 @@ pub async fn update_order_status(
     status: Json<Value>,
     id: i32,
 ) -> Result<String, ApiError> {
-
     let status = status
         .get("status")
-        .and_then(Value::as_str).ok_or(ApiError::BadRequest)?;
+        .and_then(Value::as_str)
+        .ok_or(ApiError::BadRequest)?;
 
     sqlx::query(
         r#"
@@ -173,20 +173,16 @@ pub async fn update_order_status(
     Ok("Succeed update status".to_string())
 }
 #[delete("/order/<id>")]
-pub async fn delete_order(
-    db_pool: &State<PgPool>,
-    id: i32,
-) -> Result<String, ApiError> {
-
+pub async fn delete_order(db_pool: &State<PgPool>, id: i32) -> Result<String, ApiError> {
     sqlx::query(
         r#"
             DELETE FROM orders
             WHERE id = $1
         "#,
     )
-        .bind(id)
-        .execute(&**db_pool)
-        .await?;
+    .bind(id)
+    .execute(&**db_pool)
+    .await?;
 
     Ok("Succeed delete order".to_string())
 }

@@ -1,18 +1,23 @@
 extern crate rocket;
-use crate::query::orders::orders_query::{delete_order, get_order_details, get_orders, place_new_order, update_order_status};
+
+use crate::query::orders::orders_query::{
+    delete_order, get_order_details, get_orders, place_new_order, update_order_status,
+};
 use crate::query::orders::shipping_query::{add_shipping, get_shipping_by_id};
-use crate::query::products_components::category_query::{create_category, delete_category_by_id, get_categories, get_category, update_category_name};
+use crate::query::products_components::category_query::{
+    create_category, delete_category_by_id, get_categories, get_category, update_category_name,
+};
 use crate::query::products_components::product_image_query::{
     create_product_image, delete_product_image_by_id, get_all_product_images, get_one_product_image,
 };
 use crate::query::products_components::product_query::{create_product, get_products};
 use crate::query::products_components::size_query::{create_size, get_size};
-use crate::query::user::user_query::{
-    get_profile, get_user_role, login, registration, update_profile,
-};
+use crate::query::user::user_query::{get_profile, get_user_role, login, registration, registration_by_token, try_registration, update_profile};
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use log::LevelFilter;
 use reqwest::Client;
+use rocket::figment::Figment;
+use rocket::Config;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 use sqlx::PgPool;
 use std::env;
@@ -21,9 +26,10 @@ use std::net::IpAddr;
 pub async fn set_up_rocket(db_pool: PgPool) {
     configure_logging();
 
-    let config = get_server_config();
+    let config = get_server_config().expect("Failed to configure Rocket server");
     let cors = configure_cors();
     let client = Client::new();
+
     build_rocket(db_pool, config, cors, client).await;
 }
 
@@ -33,14 +39,13 @@ fn configure_logging() {
         .init();
 }
 
-fn get_server_config() -> rocket::Config {
+fn get_server_config() -> Result<Config, rocket::figment::Error> {
     let (address, port) = parse_address_port();
 
-    rocket::Config {
-        address,
-        port,
-        ..Default::default()
-    }
+    Figment::from(Config::default())
+        .merge(("address", address.to_string()))
+        .merge(("port", port))
+        .extract()
 }
 
 fn parse_address_port() -> (IpAddr, u16) {
@@ -49,7 +54,7 @@ fn parse_address_port() -> (IpAddr, u16) {
         .parse()
         .expect("Invalid IP address");
 
-    let port = env::var("PORT")
+    let port = env::var("SERVER_PORT")
         .unwrap_or("8181".to_string())
         .parse()
         .expect("Invalid port number");
@@ -61,7 +66,12 @@ fn configure_cors() -> Cors {
     CorsOptions {
         allowed_origins: AllowedOrigins::some_exact(&[
             "http://localhost:3000",
-            "http://127.0.0.1:3000",
+            format!(
+                "http://{}:{}",
+                env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
+                env::var("SERVER_PORT").unwrap_or("8181".to_string())
+            )
+            .as_str(),
         ]),
         allowed_methods: vec!["GET", "POST", "PUT", "DELETE"]
             .into_iter()
@@ -75,8 +85,10 @@ fn configure_cors() -> Cors {
     .expect("Error while building CORS")
 }
 
-async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors, client: Client) {
+async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Client) {
     rocket::custom(config)
+        .attach(cors)
+        .attach(rocket::shield::Shield::default())
         .manage(db_pool)
         .manage(client)
         .mount(
@@ -110,10 +122,11 @@ async fn build_rocket(db_pool: PgPool, config: rocket::Config, cors: Cors, clien
                 update_order_status,
                 delete_order,
                 update_category_name,
-                delete_category_by_id
+                delete_category_by_id,
+                try_registration,
+                registration_by_token,
             ],
         )
-        .attach(cors)
         .launch()
         .await
         .expect("Failed to launch Rocket server");

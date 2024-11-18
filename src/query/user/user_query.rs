@@ -1,14 +1,17 @@
 use crate::data::user_components::authorization::{LoginRequest, LoginResponse, RoleResponse};
 use crate::data::user_components::claims::Claims;
-use crate::data::user_components::user::{TempUser, User, UserProfile};
+use crate::data::user_components::user::{JwtUser, TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
+use crate::mail::sender::{generate_registration_link, send_mail};
 use bcrypt::{hash, verify, DEFAULT_COST};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
 use std::env;
+use std::fs::exists;
+
 #[get("/user/role")]
 pub async fn get_user_role(
     db_pool: &State<PgPool>,
@@ -171,4 +174,96 @@ pub async fn update_profile(
     .await?;
 
     Ok(Json("Data successfully updated"))
+}
+#[post("/user/try_registration", data = "<user_data>")]
+pub async fn try_registration(
+    db_pool: &State<PgPool>,
+    user_data: Json<TempUser>,
+) -> Result<(), ApiError> {
+    let new_user = user_data.into_inner();
+    let exist = sqlx::query(
+        r#"
+        SELECT email FROM users WHERE email = $1
+    "#,
+    )
+    .bind(&new_user.email)
+    .fetch_optional(&**db_pool)
+    .await?;
+
+    if let Some(row) = exist {
+        let existing_email: String = row.get("email");
+        if existing_email == new_user.email {
+            return Err(ApiError::EmailError);
+        }
+    }
+
+
+    let expiration = chrono::Utc::now()
+        .checked_add_signed(chrono::Duration::minutes(5))
+        .expect("Failed to compute expiration time")
+        .timestamp() as usize;
+    let new_user = JwtUser {
+        username: new_user.username,
+        email: new_user.email.clone(),
+        password: new_user.password,
+        first_name: new_user.first_name,
+        last_name: new_user.last_name,
+        phone_number: new_user.phone_number,
+        role: new_user.role,
+        exp: expiration,
+        address: None,
+    };
+    let header = Header::new(Algorithm::HS256);
+    let token = encode(
+        &header,
+        &new_user,
+        &EncodingKey::from_secret(
+            env::var("JWT_SECRET")
+                .unwrap_or("secret".to_string())
+                .as_ref(),
+        ),
+    )
+    .map_err(|_| ApiError::EmailError)?;
+
+    send_mail(new_user.email, generate_registration_link(token))?;
+
+    Ok(())
+}
+
+#[allow(dead_code)]
+#[get("/registration?<token>")]
+pub async fn registration_by_token(
+    db_pool: &State<PgPool>,
+    token: String,
+) -> Result<Json<&'static str>, ApiError> {
+    let decoded = decode::<JwtUser>(
+        &token,
+        &DecodingKey::from_secret(
+            env::var("JWT_SECRET")
+                .unwrap_or_else(|_| "secret".to_string())
+                .as_ref(),
+        ),
+        &Validation::new(Algorithm::HS256),
+    )
+    .map_err(|_| ApiError::BadRequest)?;
+
+    let current_time = chrono::Utc::now().timestamp() as usize;
+    if decoded.claims.exp < current_time {
+        return Err(ApiError::Unauthorized);
+    }
+
+    let temp_user = TempUser {
+        username: decoded.claims.username,
+        email: decoded.claims.email,
+        password: decoded.claims.password,
+        first_name: decoded.claims.first_name,
+        last_name: decoded.claims.last_name,
+        phone_number: decoded.claims.phone_number,
+        role: decoded.claims.role,
+        address: decoded.claims.address,
+    };
+
+    registration(db_pool, Json(temp_user)).await?;
+
+    Ok(Json("Registration successful"))
 }

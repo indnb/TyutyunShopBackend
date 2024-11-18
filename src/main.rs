@@ -7,6 +7,7 @@ mod query;
 mod server;
 mod tests;
 mod utils;
+mod mail;
 
 use crate::database::init_db_pool;
 use crate::server::set_up_rocket;

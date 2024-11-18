@@ -1,31 +1,61 @@
+use rocket::http::Status;
+use rocket::response::{Responder, Response};
+use rocket::Request;
+use std::io::Cursor;
+use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ApiError {
-    #[error("Database error")]
+    #[error("Database error occurred")]
     DatabaseError(#[from] sqlx::Error),
     #[error("User not found")]
     NotFound,
     #[error("Internal server error")]
     InternalServerError,
-    #[error("User not unauthorized")]
+    #[error("Unauthorized access")]
     Unauthorized,
-    #[error("User didn`t find")]
+    #[error("Bad request")]
     BadRequest,
-    #[allow(dead_code)]
-    #[error("Http error")]
-    HttpError(String),
-    #[allow(dead_code)]
-    #[error("Payment didn`t succeed")]
-    PaymentError(String),
+    #[error("HTTP error")]
+    HttpError,
+    #[error("Payment failed")]
+    PaymentError,
+    #[error("Email already exists")]
+    EmailError,
 }
 
-impl<'r> rocket::response::Responder<'r, 'static> for ApiError {
-    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        log::error!("API error: {:?}", self);
-        match self {
-            ApiError::NotFound => Err(rocket::http::Status::NotFound),
-            _ => Err(rocket::http::Status::InternalServerError),
-        }
+impl<'r> Responder<'r, 'static> for ApiError {
+    fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
+        log::error!("API error occurred: {:?}", self);
+
+        let (status, message) = match self {
+            ApiError::DatabaseError(_) => (Status::InternalServerError, "Database error occurred"),
+            ApiError::NotFound => (Status::NotFound, "User not found"),
+            ApiError::InternalServerError => (Status::InternalServerError, "Internal server error"),
+            ApiError::Unauthorized => (Status::Unauthorized, "Unauthorized access"),
+            ApiError::BadRequest => (Status::BadRequest, "Bad request"),
+            ApiError::HttpError => (Status::InternalServerError, "HTTP error occurred"),
+            ApiError::PaymentError => (Status::PaymentRequired, "Payment failed"),
+            ApiError::EmailError => (Status::Conflict, "Email already exists"),
+        };
+
+        let body = serde_json::to_string(&ApiErrorBody {
+            error: "Error".to_string(),
+            message: message.to_string(),
+        })
+            .expect("Failed to serialize error body");
+
+        Response::build()
+            .status(status)
+            .sized_body(body.len(), Cursor::new(body))
+            .header(rocket::http::ContentType::JSON)
+            .ok()
     }
+}
+
+#[derive(Serialize)]
+struct ApiErrorBody {
+    error: String,
+    message: String,
 }

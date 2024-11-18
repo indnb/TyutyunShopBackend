@@ -64,7 +64,11 @@ pub async fn get_category(db_pool: &State<PgPool>, id: i32) -> Result<Json<Categ
     }))
 }
 #[put("/category/<id>", data = "<name>")]
-pub async fn update_category_name(db_pool: &State<PgPool>, name : Json<serde_json::Value>, id: i32) -> Result<String, ApiError> {
+pub async fn update_category_name(
+    db_pool: &State<PgPool>,
+    name: Json<serde_json::Value>,
+    id: i32,
+) -> Result<String, ApiError> {
     let name = name
         .get("name")
         .and_then(serde_json::Value::as_str)
@@ -77,10 +81,10 @@ pub async fn update_category_name(db_pool: &State<PgPool>, name : Json<serde_jso
         WHERE id = $1
         "#,
     )
-        .bind(id)
-        .bind(name)
-        .execute(&**db_pool)
-        .await?;
+    .bind(id)
+    .bind(name)
+    .execute(&**db_pool)
+    .await?;
 
     Ok("Category successfully updated".to_string())
 }
@@ -92,9 +96,9 @@ pub async fn delete_category_by_id(db_pool: &State<PgPool>, id: i32) -> Result<S
         WHERE id = $1
         "#,
     )
-        .bind(id)
-        .execute(&**db_pool)
-        .await?;
+    .bind(id)
+    .execute(&**db_pool)
+    .await?;
 
     Ok("Category successfully deleted".to_string())
 }
