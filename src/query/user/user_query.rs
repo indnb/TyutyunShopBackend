@@ -11,6 +11,7 @@ use rocket::State;
 use sqlx::{PgPool, Row};
 use std::env;
 use std::fs::exists;
+use rocket::response::Redirect;
 
 #[get("/user/role")]
 pub async fn get_user_role(
@@ -234,7 +235,7 @@ pub async fn try_registration(
 pub async fn registration_by_token(
     db_pool: &State<PgPool>,
     token: String,
-) -> Result<Json<&'static str>, ApiError> {
+) -> Result<Redirect, ApiError> {
     let decoded = decode::<JwtUser>(
         &token,
         &DecodingKey::from_secret(
@@ -264,5 +265,5 @@ pub async fn registration_by_token(
 
     registration(db_pool, Json(temp_user)).await?;
 
-    Ok(Json("Registration successful"))
+    Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")) //CHANGE IN PRODUCTION
 }
