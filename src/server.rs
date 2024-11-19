@@ -12,7 +12,7 @@ use crate::query::products_components::product_image_query::{
 };
 use crate::query::products_components::product_query::{create_product, get_products};
 use crate::query::products_components::size_query::{create_size, get_size};
-use crate::query::user::user_query::{get_profile, get_user_role, login, registration, registration_by_token, try_registration, update_profile};
+use crate::query::user::user_query::{get_profile, get_user_role, login, registration, registration_by_token, try_registration, update_password, update_profile};
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use log::LevelFilter;
 use reqwest::Client;
@@ -98,6 +98,7 @@ async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Clien
         .mount(
             "/api",
             routes![
+                update_password,
                 registration,
                 login,
                 get_profile,

@@ -6,12 +6,12 @@ use crate::mail::sender::{generate_registration_link, send_mail};
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use rocket::http::Status;
+use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
 use std::env;
 use std::fs::exists;
-use rocket::response::Redirect;
 
 #[get("/user/role")]
 pub async fn get_user_role(
@@ -23,10 +23,10 @@ pub async fn get_user_role(
         SELECT role FROM users WHERE id = $1
         "#,
     )
-    .bind(claims.sub)
-    .fetch_one(&**db_pool)
-    .await
-    .map_err(|_| ApiError::Unauthorized);
+        .bind(claims.sub)
+        .fetch_one(&**db_pool)
+        .await
+        .map_err(|_| ApiError::Unauthorized);
 
     match result {
         Ok(record) => Ok(Json(RoleResponse {
@@ -47,10 +47,10 @@ pub async fn login(
         SELECT * FROM users WHERE email = $1
         "#,
     )
-    .bind(&login_data.email)
-    .fetch_one(&**db_pool)
-    .await
-    .map_err(|_| ApiError::NotFound)?;
+        .bind(&login_data.email)
+        .fetch_one(&**db_pool)
+        .await
+        .map_err(|_| ApiError::NotFound)?;
 
     let is_password_valid = verify(&login_data.password, &user.password_hash)
         .map_err(|_| ApiError::InternalServerError)?;
@@ -66,7 +66,7 @@ pub async fn login(
         &claims,
         &EncodingKey::from_secret(secret.as_ref()),
     )
-    .map_err(|_| ApiError::InternalServerError)?;
+        .map_err(|_| ApiError::InternalServerError)?;
 
     Ok(Json(LoginResponse {
         id: user.id,
@@ -87,9 +87,9 @@ pub async fn get_profile(
         FROM users WHERE id = $1
         "#,
     )
-    .bind(claims.sub)
-    .fetch_one(&**db_pool)
-    .await?;
+        .bind(claims.sub)
+        .fetch_one(&**db_pool)
+        .await?;
 
     Ok(Json(UserProfile {
         id: Option::from(user.id),
@@ -145,7 +145,7 @@ pub async fn update_profile(
         .is_some();
 
     if !user_exists {
-        return Err(ApiError::BadRequest);
+        return Err(ApiError::Unauthorized);
     }
 
     sqlx::query(
@@ -162,16 +162,16 @@ pub async fn update_profile(
         WHERE id = $7
         "#,
     )
-    .bind(temp_user.username)
-    .bind(temp_user.email)
-    .bind(temp_user.first_name)
-    .bind(temp_user.last_name)
-    .bind(temp_user.phone_number)
-    .bind(temp_user.address)
-    .bind(claims.sub)
-    .bind(temp_user.role.unwrap_or("USER".to_string()))
-    .execute(&**db_pool)
-    .await?;
+        .bind(temp_user.username)
+        .bind(temp_user.email)
+        .bind(temp_user.first_name)
+        .bind(temp_user.last_name)
+        .bind(temp_user.phone_number)
+        .bind(temp_user.address)
+        .bind(claims.sub)
+        .bind(temp_user.role.unwrap_or("USER".to_string()))
+        .execute(&**db_pool)
+        .await?;
 
     Ok(Json("Data successfully updated"))
 }
@@ -186,9 +186,9 @@ pub async fn try_registration(
         SELECT email FROM users WHERE email = $1
     "#,
     )
-    .bind(&new_user.email)
-    .fetch_optional(&**db_pool)
-    .await?;
+        .bind(&new_user.email)
+        .fetch_optional(&**db_pool)
+        .await?;
 
     if let Some(row) = exist {
         let existing_email: String = row.get("email");
@@ -196,7 +196,6 @@ pub async fn try_registration(
             return Err(ApiError::EmailError);
         }
     }
-
 
     let expiration = chrono::Utc::now()
         .checked_add_signed(chrono::Duration::minutes(5))
@@ -223,7 +222,7 @@ pub async fn try_registration(
                 .as_ref(),
         ),
     )
-    .map_err(|_| ApiError::EmailError)?;
+        .map_err(|_| ApiError::EmailError)?;
 
     send_mail(new_user.email, generate_registration_link(token))?;
 
@@ -245,7 +244,7 @@ pub async fn registration_by_token(
         ),
         &Validation::new(Algorithm::HS256),
     )
-    .map_err(|_| ApiError::BadRequest)?;
+        .map_err(|_| ApiError::BadRequest)?;
 
     let current_time = chrono::Utc::now().timestamp() as usize;
     if decoded.claims.exp < current_time {
@@ -267,3 +266,61 @@ pub async fn registration_by_token(
 
     Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")) //CHANGE IN PRODUCTION
 }
+
+#[post("/user/update_password?<old_password>&<new_password>")]
+pub async fn update_password(
+    db_pool: &State<PgPool>,
+    old_password: Option<String>,
+    new_password: Option<String>,
+    claims: Claims,
+) -> Result<Json<&'static str>, ApiError> {
+    let old_password = match old_password {
+        Some(p) => p,
+        None => return Err(ApiError::BadRequest),
+    };
+
+    let new_password = match new_password {
+        Some(p) => p,
+        None => return Err(ApiError::BadRequest),
+    };
+
+    let user_exists = sqlx::query("SELECT id, password_hash FROM users WHERE id = $1")
+        .bind(claims.sub)
+        .fetch_optional(&**db_pool)
+        .await
+        .map_err(ApiError::DatabaseError)?;
+
+    let user = match user_exists {
+        Some(user) => user,
+        None => return Err(ApiError::Unauthorized),
+    };
+
+    let stored_password_hash = user.get::<String, &str>("password_hash");
+
+    let is_valid = verify(&old_password, &stored_password_hash)
+        .map_err(|_| ApiError::InternalServerError)?;
+
+    if !is_valid {
+        return Err(ApiError::Unauthorized);
+    }
+
+    let new_password_hash = hash(&new_password, DEFAULT_COST)
+        .map_err(|_| ApiError::InternalServerError)?;
+
+    sqlx::query(
+        r#"
+        UPDATE users
+        SET password_hash = $2,
+            updated_at = NOW()
+        WHERE id = $1
+        "#,
+    )
+        .bind(claims.sub)
+        .bind(new_password_hash)
+        .execute(&**db_pool)
+        .await
+        .map_err(ApiError::DatabaseError)?;
+
+    Ok(Json("Password successfully updated"))
+}
+
