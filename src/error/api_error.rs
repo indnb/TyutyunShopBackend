@@ -23,6 +23,10 @@ pub enum ApiError {
     PaymentError,
     #[error("Email already exists")]
     EmailError,
+    #[error("Phone already exists")]
+    PhoneError,
+    #[error("Username already exists")]
+    UsernameError,
 }
 
 impl<'r> Responder<'r, 'static> for ApiError {
@@ -37,11 +41,13 @@ impl<'r> Responder<'r, 'static> for ApiError {
             ApiError::BadRequest => (Status::BadRequest, "Bad request"),
             ApiError::HttpError => (Status::InternalServerError, "HTTP error occurred"),
             ApiError::PaymentError => (Status::PaymentRequired, "Payment failed"),
-            ApiError::EmailError => (Status::Conflict, "Email already exists"),
+            ApiError::EmailError => (Status::Conflict, "Таку пошту вже зареєстровано"),
+            ApiError::PhoneError => (Status::Conflict, "Такий телефон вже зареєстровано"),
+            ApiError::UsernameError => (Status::Conflict, "Такий логін вже зареєстровано"),
         };
 
         let body = serde_json::to_string(&ApiErrorBody {
-            error: "Error".to_string(),
+            error: status.to_string(),
             message: message.to_string(),
         })
             .expect("Failed to serialize error body");

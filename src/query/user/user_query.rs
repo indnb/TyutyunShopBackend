@@ -5,6 +5,7 @@ use crate::error::api_error::ApiError;
 use crate::mail::sender::{generate_registration_link, send_mail};
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use rocket::http::hyper::body::HttpBody;
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::serde::json::Json;
@@ -23,10 +24,10 @@ pub async fn get_user_role(
         SELECT role FROM users WHERE id = $1
         "#,
     )
-        .bind(claims.sub)
-        .fetch_one(&**db_pool)
-        .await
-        .map_err(|_| ApiError::Unauthorized);
+    .bind(claims.sub)
+    .fetch_one(&**db_pool)
+    .await
+    .map_err(|_| ApiError::Unauthorized);
 
     match result {
         Ok(record) => Ok(Json(RoleResponse {
@@ -47,10 +48,10 @@ pub async fn login(
         SELECT * FROM users WHERE email = $1
         "#,
     )
-        .bind(&login_data.email)
-        .fetch_one(&**db_pool)
-        .await
-        .map_err(|_| ApiError::NotFound)?;
+    .bind(&login_data.email)
+    .fetch_one(&**db_pool)
+    .await
+    .map_err(|_| ApiError::NotFound)?;
 
     let is_password_valid = verify(&login_data.password, &user.password_hash)
         .map_err(|_| ApiError::InternalServerError)?;
@@ -66,7 +67,7 @@ pub async fn login(
         &claims,
         &EncodingKey::from_secret(secret.as_ref()),
     )
-        .map_err(|_| ApiError::InternalServerError)?;
+    .map_err(|_| ApiError::InternalServerError)?;
 
     Ok(Json(LoginResponse {
         id: user.id,
@@ -162,16 +163,16 @@ pub async fn update_profile(
         WHERE id = $7
         "#,
     )
-        .bind(temp_user.username)
-        .bind(temp_user.email)
-        .bind(temp_user.first_name)
-        .bind(temp_user.last_name)
-        .bind(temp_user.phone_number)
-        .bind(temp_user.address)
-        .bind(claims.sub)
-        .bind(temp_user.role.unwrap_or("USER".to_string()))
-        .execute(&**db_pool)
-        .await?;
+    .bind(temp_user.username)
+    .bind(temp_user.email)
+    .bind(temp_user.first_name)
+    .bind(temp_user.last_name)
+    .bind(temp_user.phone_number)
+    .bind(temp_user.address)
+    .bind(claims.sub)
+    .bind(temp_user.role.unwrap_or("USER".to_string()))
+    .execute(&**db_pool)
+    .await?;
 
     Ok(Json("Data successfully updated"))
 }
@@ -183,17 +184,28 @@ pub async fn try_registration(
     let new_user = user_data.into_inner();
     let exist = sqlx::query(
         r#"
-        SELECT email FROM users WHERE email = $1
-    "#,
+        SELECT email, phone_number, username FROM users
+        WHERE email = $1 OR phone_number = $2 OR username = $3
+        "#,
     )
-        .bind(&new_user.email)
-        .fetch_optional(&**db_pool)
-        .await?;
+    .bind(&new_user.email)
+    .bind(&new_user.phone_number)
+    .bind(&new_user.username)
+    .fetch_optional(&**db_pool)
+    .await?;
 
     if let Some(row) = exist {
         let existing_email: String = row.get("email");
         if existing_email == new_user.email {
             return Err(ApiError::EmailError);
+        }
+        let existing_phone: String = row.get("phone_number");
+        if existing_phone == new_user.phone_number.clone().unwrap_or_default() {
+            return Err(ApiError::PhoneError);
+        }
+        let existing_username: String = row.get("username");
+        if existing_username == new_user.username {
+            return Err(ApiError::UsernameError);
         }
     }
 
@@ -201,6 +213,7 @@ pub async fn try_registration(
         .checked_add_signed(chrono::Duration::minutes(5))
         .expect("Failed to compute expiration time")
         .timestamp() as usize;
+
     let new_user = JwtUser {
         username: new_user.username,
         email: new_user.email.clone(),
@@ -212,6 +225,7 @@ pub async fn try_registration(
         exp: expiration,
         address: None,
     };
+
     let header = Header::new(Algorithm::HS256);
     let token = encode(
         &header,
@@ -222,10 +236,9 @@ pub async fn try_registration(
                 .as_ref(),
         ),
     )
-        .map_err(|_| ApiError::EmailError)?;
+    .map_err(|_| ApiError::InternalServerError)?;
 
     send_mail(new_user.email, generate_registration_link(token))?;
-
     Ok(())
 }
 
@@ -235,7 +248,7 @@ pub async fn registration_by_token(
     db_pool: &State<PgPool>,
     token: String,
 ) -> Result<Redirect, ApiError> {
-    let decoded = decode::<JwtUser>(
+    let decoded = match decode::<JwtUser>(
         &token,
         &DecodingKey::from_secret(
             env::var("JWT_SECRET")
@@ -243,12 +256,13 @@ pub async fn registration_by_token(
                 .as_ref(),
         ),
         &Validation::new(Algorithm::HS256),
-    )
-        .map_err(|_| ApiError::BadRequest)?;
-
+    ) {
+        Ok(user) => user,
+        Err(_) => return Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")), //CHANGE IN PRODUCTION
+    };
     let current_time = chrono::Utc::now().timestamp() as usize;
     if decoded.claims.exp < current_time {
-        return Err(ApiError::Unauthorized);
+        return Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")); //CHANGE IN PRODUCTION
     }
 
     let temp_user = TempUser {
@@ -297,15 +311,15 @@ pub async fn update_password(
 
     let stored_password_hash = user.get::<String, &str>("password_hash");
 
-    let is_valid = verify(&old_password, &stored_password_hash)
-        .map_err(|_| ApiError::InternalServerError)?;
+    let is_valid =
+        verify(&old_password, &stored_password_hash).map_err(|_| ApiError::InternalServerError)?;
 
     if !is_valid {
         return Err(ApiError::Unauthorized);
     }
 
-    let new_password_hash = hash(&new_password, DEFAULT_COST)
-        .map_err(|_| ApiError::InternalServerError)?;
+    let new_password_hash =
+        hash(&new_password, DEFAULT_COST).map_err(|_| ApiError::InternalServerError)?;
 
     sqlx::query(
         r#"
@@ -315,12 +329,11 @@ pub async fn update_password(
         WHERE id = $1
         "#,
     )
-        .bind(claims.sub)
-        .bind(new_password_hash)
-        .execute(&**db_pool)
-        .await
-        .map_err(ApiError::DatabaseError)?;
+    .bind(claims.sub)
+    .bind(new_password_hash)
+    .execute(&**db_pool)
+    .await
+    .map_err(ApiError::DatabaseError)?;
 
     Ok(Json("Password successfully updated"))
 }
-
