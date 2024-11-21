@@ -2,6 +2,10 @@ use crate::error::api_error::ApiError;
 use crate::tests::database::request_test_db::send_request;
 use reqwest::Client;
 use rocket::serde::json::json;
+use rocket::State;
+use sqlx::PgPool;
+use crate::data::user_components::user::TempUser;
+use crate::query::user::user_query::registration;
 
 pub struct UserTest<'a> {
     pub client: &'a Client,
@@ -10,8 +14,8 @@ pub struct UserTest<'a> {
 }
 impl UserTest<'_> {
     #[allow(dead_code)]
-    pub async fn new<'a>(client: &'a Client, base_url: &'a str) -> Result<UserTest<'a>, ApiError> {
-        Self::user_registration(client, base_url).await?;
+    pub async fn new<'a>(db_pool: &'a State<PgPool>, client: &'a Client, base_url: &'a str) -> Result<UserTest<'a>, ApiError> {
+        Self::registration_admin(db_pool).await?;
         let auth_header = format!("Bearer {}", Self::user_login(client, base_url).await?);
 
         Ok(UserTest {
@@ -49,20 +53,18 @@ impl UserTest<'_> {
         Ok(())
     }
     #[allow(dead_code)]
-    async fn user_registration(client: &Client, base_url: &str) -> Result<(), ApiError> {
-        let request = client
-            .post(format!("{}/api/user/registration", base_url))
-            .json(&json!({
-                "username": "admin",
-                "email": "admin",
-                "first_name": "Vlad",
-                "last_name": "Lavrishko",
-                "phone_number": "+380660000000",
-                "password": "123123",
-                "address": "",
-                "role": "ADMIN"
-            }));
-        send_request(request).await?;
+    async fn registration_admin(db_pool: &State<PgPool>) -> Result<(), ApiError> {
+        let admin = TempUser {
+                username: "admin".to_string(),
+            email: "admin".to_string(),
+            password: Some("admin".to_string()),
+            first_name: Some("admin".to_string()),
+            last_name: Some("admin".to_string()),
+            phone_number: Some("+380000000000".to_string()),
+            role: Some("ADMIN".to_string()),
+            address: Some("Solomyanska 7".to_string()),
+        };
+        registration(db_pool, admin).await?;
         Ok(())
     }
     #[allow(dead_code)]
@@ -71,7 +73,7 @@ impl UserTest<'_> {
             .post(format!("{}/api/user/login", base_url))
             .json(&json!({
                 "email": "admin",
-                "password": "123123"
+                "password": "admin"
             }));
         let response_text = send_request(request).await?;
         let login_json: serde_json::Value = serde_json::from_str(&response_text).unwrap();

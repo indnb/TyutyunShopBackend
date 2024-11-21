@@ -103,10 +103,8 @@ pub async fn get_profile(
 
 pub async fn registration(
     db_pool: &State<PgPool>,
-    user_data: Json<TempUser>,
+    user_data: TempUser,
 ) -> Result<(), ApiError> {
-    let new_user = user_data.into_inner();
-
     sqlx::query(
         r#"
         INSERT INTO users (
@@ -114,13 +112,13 @@ pub async fn registration(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
         "#
-    ).bind(new_user.username)
-        .bind(new_user.email)
-        .bind(hash(new_user.password.unwrap(), DEFAULT_COST).expect("password hash should be valid"))
-        .bind(new_user.first_name)
-        .bind(new_user.last_name)
-        .bind(new_user.phone_number)
-        .bind(new_user.role.unwrap_or("USER".to_string()))
+    ).bind(user_data.username)
+        .bind(user_data.email)
+        .bind(hash(user_data.password.unwrap(), DEFAULT_COST).expect("password hash should be valid"))
+        .bind(user_data.first_name)
+        .bind(user_data.last_name)
+        .bind(user_data.phone_number)
+        .bind(user_data.role.unwrap_or("USER".to_string()))
         .execute(&**db_pool)
         .await
         .map_err(ApiError::DatabaseError)?;
@@ -134,8 +132,10 @@ pub async fn update_profile(
     user_data: Json<TempUser>,
     claims: Claims,
 ) -> Result<Json<&'static str>, ApiError> {
-    let temp_user = user_data.into_inner();
-
+    let mut temp_user = user_data.into_inner();
+    if claims.role != Some("ADMIN".to_string()) {
+        temp_user.role = Some("USER".to_string());
+    }
     let user_exists = sqlx::query("SELECT id FROM users WHERE id = $1")
         .bind(claims.sub)
         .fetch_optional(&**db_pool)
@@ -263,7 +263,7 @@ pub async fn registration_by_token(
         return Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")); //CHANGE IN PRODUCTION
     }
 
-    let temp_user = TempUser {
+    registration(db_pool, TempUser {
         username: decoded.claims.username,
         email: decoded.claims.email,
         password: decoded.claims.password,
@@ -272,9 +272,7 @@ pub async fn registration_by_token(
         phone_number: decoded.claims.phone_number,
         role: decoded.claims.role,
         address: decoded.claims.address,
-    };
-
-    registration(db_pool, Json(temp_user)).await?;
+    }).await?;
 
     Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")) //CHANGE IN PRODUCTION
 }

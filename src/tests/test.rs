@@ -14,19 +14,28 @@ mod test {
     use std::path::Path;
     use std::time::Duration;
     use std::{env, fs};
+    use rocket::State;
+    use sqlx::Error;
     use tokio::time::sleep;
 
     #[tokio::test]
     async fn bootstrap_test() -> Result<(), ApiError> {
         dotenv::dotenv().ok();
-        let db_pool = init_db_pool().await;
+
+        let db_pool = init_db_pool()
+            .await
+            .map_err(|_| ApiError::DatabaseError(Error::RowNotFound))?;
+        let db_ref = &db_pool;
 
         if !Path::new(PRODUCT_IMAGES).exists() {
             fs::create_dir(PRODUCT_IMAGES).expect("Failed to create images directory");
         }
 
-        tokio::spawn(async move {
-            set_up_rocket(db_pool.unwrap()).await;
+        tokio::spawn({
+            let db_pool_clone = db_pool.clone();
+            async move {
+                set_up_rocket(db_pool_clone).await;
+            }
         });
 
         sleep(Duration::from_secs(1)).await;
@@ -38,13 +47,14 @@ mod test {
 
         let base_url = format!(
             "http://{}:{}",
-            env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
-            env::var("SERVER_PORT").unwrap_or("8181".to_string())
+            env::var("SERVER_ADDRESS").unwrap_or_else(|_| "127.0.0.1".to_string()),
+            env::var("SERVER_PORT").unwrap_or_else(|_| "8181".to_string())
         );
 
-        let user_test = UserTest::new(&client, &base_url).await?;
+        let user_test = UserTest::new(State::from(db_ref), &client, &base_url).await?;
         user_test.update_user_profile().await?;
         user_test.get_user_profile().await?;
+
         create_category(&user_test, "Кепки").await?;
         create_cap_black(&user_test).await?;
         create_cap_red(&user_test).await?;
@@ -58,4 +68,5 @@ mod test {
 
         Ok(())
     }
+
 }
