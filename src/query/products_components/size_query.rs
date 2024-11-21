@@ -1,15 +1,15 @@
 use crate::data::products_components::size::Size;
+use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
-use sqlx::{PgPool, Row};
-use crate::data::user_components::claims::Claims;
+use sqlx::{query, PgPool, Row};
 
 #[post("/size", data = "<size>")]
 pub async fn create_size(
     db_pool: &State<PgPool>,
     size: Json<Size>,
-    claims: Claims
+    claims: Claims,
 ) -> Result<&'static str, ApiError> {
     claims.check_admin()?;
     let size = size.into_inner();
@@ -73,4 +73,32 @@ pub async fn get_size(db_pool: &State<PgPool>, product_id: i32) -> Result<Json<S
         xl: row.get("xl"),
         xxl: row.get("xxl"),
     }))
+}
+#[put("/size/update", data = "<size>")]
+pub async fn update_size(
+    db_pool: &State<PgPool>,
+    size: Json<Size>,
+    claims: Claims,
+) -> Result<String, ApiError> {
+    claims.check_admin()?;
+    let size = size.into_inner();
+
+    let _ = query(
+        r#"
+        UPDATE product_sizes
+        SET s = $1, m = $2, xl = $3, xxl = $4, l = $5, single_size = $6, product_id = $7
+        WHERE product_id = $7
+    "#,
+    )
+    .bind(size.s)
+    .bind(size.m)
+    .bind(size.xl)
+    .bind(size.xxl)
+    .bind(size.l)
+    .bind(size.single_size)
+    .bind(size.product_id)
+    .execute(&**db_pool)
+    .await?;
+
+    Ok("Size succeed update".to_string())
 }

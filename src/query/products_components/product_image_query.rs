@@ -15,7 +15,7 @@ use uuid::Uuid;
 pub async fn create_product_image(
     db_pool: &State<PgPool>,
     image_form: Form<NewProductImage<'_>>,
-    claims: Claims
+    claims: Claims,
 ) -> Result<&'static str, ApiError> {
     claims.check_admin()?;
     let product_image = image_form.into_inner();
@@ -71,7 +71,6 @@ pub async fn get_one_product_image(
     .await
     .map_err(ApiError::DatabaseError)?;
 
-    let id: i32 = row.get("id");
     let image_url: String = format!(
         "http://{}:{}/{}/{}",
         env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
@@ -80,7 +79,12 @@ pub async fn get_one_product_image(
         row.get::<String, &str>("image_url")
     );
 
-    Ok(Json(ProductImage { id, image_url }))
+    Ok(Json(ProductImage {
+        id: row.get("id"),
+        image_url,
+        product_id: row.get("product_id"),
+        position: row.get("position"),
+    }))
 }
 
 #[delete("/product_image/<id>")]
@@ -149,7 +153,6 @@ pub async fn get_all_product_images(
         .await
         .map_err(ApiError::DatabaseError)?,
     };
-
     let images: Vec<ProductImage> = rows
         .iter()
         .map(|row| ProductImage {
@@ -161,8 +164,64 @@ pub async fn get_all_product_images(
                 PRODUCT_IMAGES,
                 row.get::<String, _>("image_url")
             ),
+            product_id,
+            position: row.get("position"),
         })
         .collect();
 
     Ok(Json(images))
+}
+#[put("/product_image/update", data = "<product_image>")]
+pub async fn update_product_image(
+    db_pool: &State<PgPool>,
+    product_image: Json<ProductImage>,
+    claims: Claims,
+) -> Result<String, ApiError> {
+    claims.check_admin()?;
+    let product_image = product_image.into_inner();
+
+    let mut tx = db_pool.begin().await?;
+
+    sqlx::query(
+        r#"
+        UPDATE product_images
+        SET product_id = $1, position = $3, updated_at = NOW()
+        WHERE id = $2
+        "#,
+    )
+        .bind(product_image.product_id)
+        .bind(product_image.id)
+        .bind(product_image.position)
+        .execute(&mut *tx)
+        .await?;
+
+    if product_image.position == Some(1) {
+        sqlx::query(
+            r#"
+            UPDATE products
+            SET primary_image_id = $1, updated_at = NOW()
+            WHERE id = $2
+            "#,
+        )
+            .bind(product_image.id)
+            .bind(product_image.product_id)
+            .execute(&mut *tx)
+            .await?;
+
+        sqlx::query(
+            r#"
+            UPDATE product_images
+            SET position = NULL
+            WHERE product_id = $1 AND id != $2 AND position = 1
+            "#,
+        )
+            .bind(product_image.product_id)
+            .bind(product_image.id)
+            .execute(&mut *tx)
+            .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok("Product image updated successfully".to_string())
 }

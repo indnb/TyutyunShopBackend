@@ -57,7 +57,6 @@ pub async fn init_db_pool() -> Result<PgPool> {
                     id SERIAL PRIMARY KEY,
                     product_id INT,
                     image_url VARCHAR(255) NOT NULL,
-                    alt_text VARCHAR(255),
                     position INT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

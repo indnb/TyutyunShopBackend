@@ -165,7 +165,7 @@ pub async fn update_order_status(
     sqlx::query(
         r#"
             UPDATE orders
-            SET status = $2
+            SET status = $2, updated_at = NOW()
             WHERE id = $1
         "#,
     )

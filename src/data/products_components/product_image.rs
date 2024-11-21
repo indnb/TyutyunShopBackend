@@ -10,4 +10,6 @@ pub struct NewProductImage<'r> {
 pub struct ProductImage {
     pub id: i32,
     pub image_url: String,
+    pub product_id: Option<i32>,
+    pub position: Option<i32>,
 }

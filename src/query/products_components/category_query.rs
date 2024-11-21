@@ -78,7 +78,7 @@ pub async fn update_category_name(
     sqlx::query(
         r#"
         UPDATE categories
-        SET name = $2
+        SET name = $2, updated_at = NOW()
         WHERE id = $1
         "#,
     )

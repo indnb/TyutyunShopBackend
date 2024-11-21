@@ -1,9 +1,9 @@
 use crate::data::products_components::product::Product;
+use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
-use sqlx::{PgPool, Row};
-use crate::data::user_components::claims::Claims;
+use sqlx::{query, PgPool, Row};
 
 #[post("/product", data = "<product>")]
 pub async fn create_product(
@@ -102,4 +102,40 @@ pub async fn get_products(
             })
             .collect::<Vec<Product>>(),
     ))
+}
+#[put("/product/update", data = "<product>")]
+pub async fn product_update(
+    db_pool: &State<PgPool>,
+    product: Json<Product>,
+    claims: Claims,
+) -> Result<String, ApiError> {
+    claims.check_admin()?;
+    let product = product.into_inner();
+
+    let _ = query(
+        r#"
+        UPDATE products
+        SET name = $1, description = $2, primary_image_id = $3, price = $4, category_id = $5, updated_at = NOW()
+        WHERE id = $6
+    "#,
+    )
+    .bind(product.name)
+    .bind(product.description)
+    .bind(product.primary_image_id)
+    .bind(product.price)
+    .bind(product.category_id)
+    .bind(product.id)
+    .execute(&**db_pool)
+    .await?;
+
+    Ok("Product succeed update!".to_string())
+}
+#[delete("/product/<id>")]
+pub async fn delete_product(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
+    claims.check_admin()?;
+    let _ = query(r#"
+        DELETE FROM products
+        WHERE id = $1
+    "#).bind(id).execute(&**db_pool).await?;
+    Ok("Product was successfully deleted!".to_string())
 }

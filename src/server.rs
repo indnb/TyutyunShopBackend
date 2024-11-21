@@ -7,11 +7,9 @@ use crate::query::orders::shipping_query::{add_shipping, get_shipping_by_id};
 use crate::query::products_components::category_query::{
     create_category, delete_category_by_id, get_categories, get_category, update_category_name,
 };
-use crate::query::products_components::product_image_query::{
-    create_product_image, delete_product_image_by_id, get_all_product_images, get_one_product_image,
-};
-use crate::query::products_components::product_query::{create_product, get_products};
-use crate::query::products_components::size_query::{create_size, get_size};
+use crate::query::products_components::product_image_query::{create_product_image, delete_product_image_by_id, get_all_product_images, get_one_product_image, update_product_image};
+use crate::query::products_components::product_query::{create_product, delete_product, get_products, product_update};
+use crate::query::products_components::size_query::{create_size, get_size, update_size};
 use crate::query::user::user_query::{get_profile, get_user_role, login, registration_by_token, try_registration, update_password, update_profile};
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use log::LevelFilter;
@@ -127,6 +125,10 @@ async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Clien
                 try_registration,
                 registration_by_token,
                 new_order_receive,
+                product_update,
+                update_size,
+                update_product_image,
+                delete_product,
             ],
         )
         .launch()
