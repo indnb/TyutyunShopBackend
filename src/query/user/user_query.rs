@@ -179,7 +179,8 @@ pub async fn try_registration(
     db_pool: &State<PgPool>,
     user_data: Json<TempUser>,
 ) -> Result<(), ApiError> {
-    let new_user = user_data.into_inner();
+    let mut new_user = user_data.into_inner();
+    new_user.role = Some("USER".to_string());
     let exist = sqlx::query(
         r#"
         SELECT email, phone_number, username FROM users
