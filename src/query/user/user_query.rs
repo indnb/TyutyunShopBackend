@@ -101,7 +101,6 @@ pub async fn get_profile(
     }))
 }
 
-#[post("/user/registration", data = "<user_data>")]
 pub async fn registration(
     db_pool: &State<PgPool>,
     user_data: Json<TempUser>,
