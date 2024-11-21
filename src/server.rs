@@ -22,6 +22,7 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 use sqlx::PgPool;
 use std::env;
 use std::net::IpAddr;
+use crate::query::mail::mail_query::new_order_receive;
 
 pub async fn set_up_rocket(db_pool: PgPool) {
     configure_logging();
@@ -126,6 +127,7 @@ async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Clien
                 delete_category_by_id,
                 try_registration,
                 registration_by_token,
+                new_order_receive,
             ],
         )
         .launch()

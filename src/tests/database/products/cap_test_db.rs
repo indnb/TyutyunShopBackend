@@ -8,7 +8,7 @@ use crate::tests::database::products::property::size_test_db::create_sizes;
 use crate::tests::database::user_test_db::UserTest;
 
 #[allow(dead_code)]
-pub async fn create_cap_red<'a>(user_test: &UserTest<'a>) -> Result<(), ApiError> {
+pub async fn create_cap_red(user_test: &UserTest<'_>) -> Result<(), ApiError> {
     upload_image(user_test, CAP_RED, None).await?;
     create_product(
         user_test,
@@ -45,7 +45,7 @@ pub async fn create_cap_red<'a>(user_test: &UserTest<'a>) -> Result<(), ApiError
     Ok(())
 }
 #[allow(dead_code)]
-pub async fn create_cap_beige<'a>(user_test: &UserTest<'a>) -> Result<(), ApiError> {
+pub async fn create_cap_beige(user_test: &UserTest<'_>) -> Result<(), ApiError> {
     upload_image(user_test, CAP_BEIGE, None).await?;
     create_product(
         user_test,
@@ -82,7 +82,7 @@ pub async fn create_cap_beige<'a>(user_test: &UserTest<'a>) -> Result<(), ApiErr
     Ok(())
 }
 #[allow(dead_code)]
-pub async fn create_cap_black<'a>(user_test: &UserTest<'a>) -> Result<(), ApiError> {
+pub async fn create_cap_black(user_test: &UserTest<'_>) -> Result<(), ApiError> {
     upload_image(user_test, CAP_BLACK, None).await?;
     create_product(
         user_test,

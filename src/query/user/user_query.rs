@@ -2,17 +2,15 @@ use crate::data::user_components::authorization::{LoginRequest, LoginResponse, R
 use crate::data::user_components::claims::Claims;
 use crate::data::user_components::user::{JwtUser, TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
-use crate::mail::sender::{generate_registration_link, send_mail};
+use crate::mail::sender::{generate_registration_link, send_mail_registration};
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use rocket::http::hyper::body::HttpBody;
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
 use std::env;
-use std::fs::exists;
 
 #[get("/user/role")]
 pub async fn get_user_role(
@@ -238,7 +236,7 @@ pub async fn try_registration(
     )
     .map_err(|_| ApiError::InternalServerError)?;
 
-    send_mail(new_user.email, generate_registration_link(token))?;
+    send_mail_registration(new_user.email, generate_registration_link(token))?;
     Ok(())
 }
 

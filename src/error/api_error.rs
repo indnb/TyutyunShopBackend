@@ -17,8 +17,10 @@ pub enum ApiError {
     Unauthorized,
     #[error("Bad request")]
     BadRequest,
+    #[allow(dead_code)]
     #[error("HTTP error")]
     HttpError,
+    #[allow(dead_code)]
     #[error("Payment failed")]
     PaymentError,
     #[error("Email already exists")]

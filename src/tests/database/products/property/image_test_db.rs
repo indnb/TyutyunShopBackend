@@ -3,8 +3,8 @@ use crate::tests::database::request_test_db::send_request;
 use crate::tests::database::user_test_db::UserTest;
 use reqwest::multipart;
 
-pub async fn upload_image<'a>(
-    user_test: &UserTest<'a>,
+pub async fn upload_image(
+    user_test: &UserTest<'_>,
     file_id: &str,
     product_id: Option<&i32>,
 ) -> Result<(), ApiError> {

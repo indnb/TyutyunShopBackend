@@ -5,7 +5,7 @@ use crate::tests::database::user_test_db::UserTest;
 use rocket::serde::json::json;
 
 #[allow(dead_code)]
-pub async fn create_category<'a>(user_test: &UserTest<'a>, name: &str) -> Result<(), ApiError> {
+pub async fn create_category(user_test: &UserTest<'_>, name: &str) -> Result<(), ApiError> {
     let request = user_test
         .client
         .post(format!("{}/api/category", user_test.base_url))

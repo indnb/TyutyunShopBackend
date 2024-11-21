@@ -8,7 +8,7 @@ use crate::tests::database::products::property::size_test_db::create_sizes;
 use crate::tests::database::user_test_db::UserTest;
 
 #[allow(dead_code)]
-pub async fn create_hoodie_black<'a>(user_test: &UserTest<'a>) -> Result<(), ApiError> {
+pub async fn create_hoodie_black(user_test: &UserTest<'_>) -> Result<(), ApiError> {
     upload_image(user_test, HOODIE_BLACK, None).await?;
     create_product(
         user_test,

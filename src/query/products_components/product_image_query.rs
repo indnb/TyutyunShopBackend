@@ -4,16 +4,12 @@ use crate::error::api_error::ApiError;
 use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use dotenv::dotenv;
 use rocket::form::Form;
-use rocket::http::Status;
-use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
-use rocket::{Request, State};
-use serde::Deserialize;
+use rocket::State;
 use sqlx::{PgPool, Row};
 use std::{env, fs};
 use tokio::fs::File;
 use uuid::Uuid;
-use crate::data::user_components::claims;
 
 #[post("/product_image", data = "<image_form>")]
 pub async fn create_product_image(

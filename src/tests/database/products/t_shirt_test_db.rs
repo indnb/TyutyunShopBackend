@@ -8,7 +8,7 @@ use crate::tests::database::products::property::size_test_db::create_sizes;
 use crate::tests::database::user_test_db::UserTest;
 
 #[allow(dead_code)]
-pub async fn create_t_shirt_black<'a>(user_test: &UserTest<'a>) -> Result<(), ApiError> {
+pub async fn create_t_shirt_black(user_test: &UserTest<'_>) -> Result<(), ApiError> {
     upload_image(user_test, T_SHIRT_BLACK, None).await?;
     create_product(
         user_test,
@@ -43,7 +43,7 @@ pub async fn create_t_shirt_black<'a>(user_test: &UserTest<'a>) -> Result<(), Ap
     Ok(())
 }
 #[allow(dead_code)]
-pub async fn create_t_shirt_white<'a>(user_test: &UserTest<'a>) -> Result<(), ApiError> {
+pub async fn create_t_shirt_white(user_test: &UserTest<'_>) -> Result<(), ApiError> {
     upload_image(user_test, T_SHIRT_WHITE, None).await?;
     create_product(
         user_test,

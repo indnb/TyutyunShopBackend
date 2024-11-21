@@ -4,8 +4,8 @@ use crate::tests::database::request_test_db::send_request;
 use crate::tests::database::user_test_db::UserTest;
 use rocket::serde::json::json;
 
-pub async fn create_product<'a>(
-    user_test: &UserTest<'a>,
+pub async fn create_product(
+    user_test: &UserTest<'_>,
     product: &Product,
 ) -> Result<(), ApiError> {
     let request = user_test
@@ -18,7 +18,7 @@ pub async fn create_product<'a>(
 }
 
 #[allow(dead_code)]
-pub async fn get_product_by_id<'a>(user: &UserTest<'a>) -> Result<(), ApiError> {
+pub async fn get_product_by_id(user: &UserTest<'_>) -> Result<(), ApiError> {
     let request = user
         .client
         .get(format!("{}/api/product?product_id=1", user.base_url));
