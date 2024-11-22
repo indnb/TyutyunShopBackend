@@ -3,6 +3,7 @@ use crate::data::user_components::claims::Claims;
 use crate::data::user_components::user::{JwtUser, TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
 use crate::mail::sender::{generate_registration_link, send_mail_registration};
+use crate::utils::env_configuration::CONFIG;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use rocket::http::Status;
@@ -10,7 +11,6 @@ use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
-use std::env;
 
 #[get("/user/role")]
 pub async fn get_user_role(
@@ -58,7 +58,7 @@ pub async fn login(
         return Err(ApiError::Unauthorized);
     }
 
-    let secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set in .env");
+    let secret = CONFIG.get().unwrap().jwt_secret.as_str();
     let claims = Claims::new(user.id, user.role);
     let token = encode(
         &Header::new(Algorithm::HS512),
@@ -101,10 +101,7 @@ pub async fn get_profile(
     }))
 }
 
-pub async fn registration(
-    db_pool: &State<PgPool>,
-    user_data: TempUser,
-) -> Result<(), ApiError> {
+pub async fn registration(db_pool: &State<PgPool>, user_data: TempUser) -> Result<(), ApiError> {
     sqlx::query(
         r#"
         INSERT INTO users (
@@ -228,11 +225,7 @@ pub async fn try_registration(
     let token = encode(
         &header,
         &new_user,
-        &EncodingKey::from_secret(
-            env::var("JWT_SECRET")
-                .unwrap_or("secret".to_string())
-                .as_ref(),
-        ),
+        &EncodingKey::from_secret(CONFIG.get().unwrap().jwt_secret.as_ref()),
     )
     .map_err(|_| ApiError::InternalServerError)?;
 
@@ -248,11 +241,7 @@ pub async fn registration_by_token(
 ) -> Result<Redirect, ApiError> {
     let decoded = match decode::<JwtUser>(
         &token,
-        &DecodingKey::from_secret(
-            env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "secret".to_string())
-                .as_ref(),
-        ),
+        &DecodingKey::from_secret(CONFIG.get().unwrap().jwt_secret.as_ref()),
         &Validation::new(Algorithm::HS256),
     ) {
         Ok(user) => user,
@@ -263,16 +252,20 @@ pub async fn registration_by_token(
         return Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")); //CHANGE IN PRODUCTION
     }
 
-    registration(db_pool, TempUser {
-        username: decoded.claims.username,
-        email: decoded.claims.email,
-        password: decoded.claims.password,
-        first_name: decoded.claims.first_name,
-        last_name: decoded.claims.last_name,
-        phone_number: decoded.claims.phone_number,
-        role: decoded.claims.role,
-        address: decoded.claims.address,
-    }).await?;
+    registration(
+        db_pool,
+        TempUser {
+            username: decoded.claims.username,
+            email: decoded.claims.email,
+            password: decoded.claims.password,
+            first_name: decoded.claims.first_name,
+            last_name: decoded.claims.last_name,
+            phone_number: decoded.claims.phone_number,
+            role: decoded.claims.role,
+            address: decoded.claims.address,
+        },
+    )
+    .await?;
 
     Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")) //CHANGE IN PRODUCTION
 }

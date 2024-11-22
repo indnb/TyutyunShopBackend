@@ -6,6 +6,7 @@ use rocket::State;
 use sqlx::PgPool;
 use crate::data::user_components::user::TempUser;
 use crate::query::user::user_query::registration;
+use crate::utils::env_configuration::CONFIG;
 
 pub struct UserTest<'a> {
     pub client: &'a Client,
@@ -46,8 +47,8 @@ impl UserTest<'_> {
                 "last_name": "Lavrishko",
                 "phone_number": "+380950000000",
                 "address": "Solomyanska 7",
-                "password": "123123",
-                "role": "ADMIN"
+                "password": CONFIG.get().unwrap().admin_password.clone(),
+                "role": CONFIG.get().unwrap().admin_role.clone()
             }));
         send_request(request).await?;
         Ok(())
@@ -57,11 +58,11 @@ impl UserTest<'_> {
         let admin = TempUser {
                 username: "admin".to_string(),
             email: "admin".to_string(),
-            password: Some("admin".to_string()),
+            password: Some(CONFIG.get().unwrap().admin_password.clone()),
             first_name: Some("admin".to_string()),
             last_name: Some("admin".to_string()),
             phone_number: Some("+380000000000".to_string()),
-            role: Some("ADMIN".to_string()),
+            role: Some(CONFIG.get().unwrap().admin_role.clone()),
             address: Some("Solomyanska 7".to_string()),
         };
         registration(db_pool, admin).await?;
@@ -73,7 +74,7 @@ impl UserTest<'_> {
             .post(format!("{}/api/user/login", base_url))
             .json(&json!({
                 "email": "admin",
-                "password": "admin"
+                "password": CONFIG.get().unwrap().admin_password.clone()
             }));
         let response_text = send_request(request).await?;
         let login_json: serde_json::Value = serde_json::from_str(&response_text).unwrap();

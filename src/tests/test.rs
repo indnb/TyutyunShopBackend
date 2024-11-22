@@ -9,26 +9,25 @@ mod test {
     use crate::tests::database::products::property::category_test_db::*;
     use crate::tests::database::products::t_shirt_test_db::*;
     use crate::tests::database::user_test_db::*;
-    use crate::utils::constants::images_constants::PRODUCT_IMAGES;
     use reqwest::Client;
     use std::path::Path;
     use std::time::Duration;
-    use std::{env, fs};
+    use std::fs;
     use rocket::State;
     use sqlx::Error;
     use tokio::time::sleep;
+    use crate::utils::env_configuration::{EnvConfiguration, CONFIG};
 
     #[tokio::test]
     async fn bootstrap_test() -> Result<(), ApiError> {
-        dotenv::dotenv().ok();
-
+        EnvConfiguration::init_config();
         let db_pool = init_db_pool()
             .await
             .map_err(|_| ApiError::DatabaseError(Error::RowNotFound))?;
         let db_ref = &db_pool;
 
-        if !Path::new(PRODUCT_IMAGES).exists() {
-            fs::create_dir(PRODUCT_IMAGES).expect("Failed to create images directory");
+        if !Path::new(CONFIG.get().unwrap().dir_product_images.as_str()).exists() {
+            fs::create_dir(CONFIG.get().unwrap().dir_product_images.as_str()).expect("Failed to create images directory");
         }
 
         tokio::spawn({
@@ -47,8 +46,8 @@ mod test {
 
         let base_url = format!(
             "http://{}:{}",
-            env::var("SERVER_ADDRESS").unwrap_or_else(|_| "127.0.0.1".to_string()),
-            env::var("SERVER_PORT").unwrap_or_else(|_| "8181".to_string())
+            CONFIG.get().unwrap().server_address,
+            CONFIG.get().unwrap().server_port
         );
 
         let user_test = UserTest::new(State::from(db_ref), &client, &base_url).await?;

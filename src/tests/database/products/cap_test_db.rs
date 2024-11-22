@@ -16,7 +16,7 @@ pub async fn create_cap_red(user_test: &UserTest<'_>) -> Result<(), ApiError> {
             id: None,
             name: "Кепка \"Кепкую\" Червона".to_string(),
             description: Some(String::from(
-                "Безрозмірна, з можливістю регулювання, матеріал принту: вишивка",
+                "Безрозмірна, з можливістю регулювання, матеріал принту - вишивка",
             )),
             primary_image_id: Some(5),
             price: 700f32,
@@ -53,7 +53,7 @@ pub async fn create_cap_beige(user_test: &UserTest<'_>) -> Result<(), ApiError> 
             id: None,
             name: "Кепка \"Кепкую\" Бежева".to_string(),
             description: Some(String::from(
-                "Безрозмірна, з можливістю регулювання, матеріал принту: вишивка",
+                "Безрозмірна, з можливістю регулювання, матеріал принту - вишивка",
             )),
             primary_image_id: Some(9),
             price: 700f32,
@@ -90,7 +90,7 @@ pub async fn create_cap_black(user_test: &UserTest<'_>) -> Result<(), ApiError> 
             id: None,
             name: "Кепка \"Кепкую\" Чорна".to_string(),
             description: Some(String::from(
-                "Безрозмірна, з можливістю регулювання, матеріал принту: вишивка",
+                "Безрозмірна, з можливістю регулювання, матеріал принту - вишивка",
             )),
             primary_image_id: Some(1),
             price: 700_f32,

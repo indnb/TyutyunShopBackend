@@ -1,17 +1,14 @@
-use dotenvy::dotenv;
 use eyre::Result;
 use sqlx::{postgres::PgPoolOptions, Connection, Executor, PgConnection, PgPool};
-use std::env;
+use crate::utils::env_configuration::CONFIG;
 
 pub async fn init_db_pool() -> Result<PgPool> {
-    dotenv().ok();
-
     let main_database_url =
-        env::var("MAIN_DATABASE_URL").expect("MAIN_DATABASE_URL must be set in the .env file");
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set in the .env file");
-    let db_name = env::var("DATABASE_NAME").expect("DATABASE_NAME must be set in the .env file");
+        CONFIG.get().unwrap().main_database_url.as_str();
+    let database_url = CONFIG.get().unwrap().database_url.as_str();
+    let db_name = CONFIG.get().unwrap().database_name.as_str();
 
-    let mut main_conn = PgConnection::connect(&main_database_url).await?;
+    let mut main_conn = PgConnection::connect(main_database_url).await?;
 
     let db_check_query = format!("SELECT 1 FROM pg_database WHERE datname = '{}';", db_name);
     let db_exists: Option<(i32,)> = sqlx::query_as(&db_check_query)
@@ -27,7 +24,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&database_url)
+        .connect(database_url)
         .await?;
 
     pool.execute(

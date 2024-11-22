@@ -1,8 +1,6 @@
 use crate::data::products_components::product_image::{NewProductImage, ProductImage};
 use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
-use crate::utils::constants::images_constants::PRODUCT_IMAGES;
-use dotenv::dotenv;
 use rocket::form::Form;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -10,6 +8,7 @@ use sqlx::{PgPool, Row};
 use std::{env, fs};
 use tokio::fs::File;
 use uuid::Uuid;
+use crate::utils::env_configuration::CONFIG;
 
 #[post("/product_image", data = "<image_form>")]
 pub async fn create_product_image(
@@ -21,9 +20,9 @@ pub async fn create_product_image(
     let product_image = image_form.into_inner();
 
     let image_filename = format!("{}.png", Uuid::new_v4());
-    let image_path = format!("{}/{}", PRODUCT_IMAGES, image_filename);
+    let image_path = format!("{}/{}", CONFIG.get().unwrap().dir_product_images, image_filename);
 
-    fs::create_dir_all(PRODUCT_IMAGES).map_err(|_| ApiError::InternalServerError)?;
+    fs::create_dir_all(CONFIG.get().unwrap().dir_product_images.as_str()).map_err(|_| ApiError::InternalServerError)?;
 
     let mut file = File::create(&image_path)
         .await
@@ -73,9 +72,9 @@ pub async fn get_one_product_image(
 
     let image_url: String = format!(
         "http://{}:{}/{}/{}",
-        env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
-        env::var("SERVER_PORT").unwrap_or("8181".to_string()),
-        PRODUCT_IMAGES,
+        CONFIG.get().unwrap().server_address,
+        CONFIG.get().unwrap().server_port,
+        CONFIG.get().unwrap().dir_product_images,
         row.get::<String, &str>("image_url")
     );
 
@@ -103,7 +102,7 @@ pub async fn delete_product_image_by_id(
 
     let absolute_path = env::current_dir()
         .expect("Failed to get current directory")
-        .join(PRODUCT_IMAGES)
+        .join(CONFIG.get().unwrap().dir_product_images.as_str())
         .join(path);
 
     let absolute_path_str = absolute_path
@@ -135,7 +134,6 @@ pub async fn get_all_product_images(
     db_pool: &State<PgPool>,
     product_id: Option<i32>,
 ) -> Result<Json<Vec<ProductImage>>, ApiError> {
-    dotenv().ok();
     let rows = match product_id {
         None => sqlx::query(r#"SELECT * FROM product_images"#)
             .fetch_all(&**db_pool)
@@ -159,9 +157,9 @@ pub async fn get_all_product_images(
             id: row.get("id"),
             image_url: format!(
                 "http://{}:{}/{}/{}",
-                env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
-                env::var("SERVER_PORT").unwrap_or("8181".to_string()),
-                PRODUCT_IMAGES,
+                CONFIG.get().unwrap().server_address,
+                CONFIG.get().unwrap().server_port,
+                CONFIG.get().unwrap().dir_product_images,
                 row.get::<String, _>("image_url")
             ),
             product_id,

@@ -11,16 +11,15 @@ use crate::query::products_components::product_image_query::{create_product_imag
 use crate::query::products_components::product_query::{create_product, delete_product, get_products, product_update};
 use crate::query::products_components::size_query::{create_size, get_size, update_size};
 use crate::query::user::user_query::{get_profile, get_user_role, login, registration_by_token, try_registration, update_password, update_profile};
-use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use log::LevelFilter;
 use reqwest::Client;
 use rocket::figment::Figment;
 use rocket::Config;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 use sqlx::PgPool;
-use std::env;
 use std::net::IpAddr;
 use crate::query::mail::mail_query::new_order_receive;
+use crate::utils::env_configuration::CONFIG;
 
 pub async fn set_up_rocket(db_pool: PgPool) {
     configure_logging();
@@ -48,13 +47,11 @@ fn get_server_config() -> Result<Config, rocket::figment::Error> {
 }
 
 fn parse_address_port() -> (IpAddr, u16) {
-    let address = env::var("SERVER_ADDRESS")
-        .unwrap_or("127.0.0.1".to_string())
+    let address = CONFIG.get().unwrap().server_address
         .parse()
         .expect("Invalid IP address");
 
-    let port = env::var("SERVER_PORT")
-        .unwrap_or("8181".to_string())
+    let port = CONFIG.get().unwrap().server_port
         .parse()
         .expect("Invalid port number");
 
@@ -67,8 +64,8 @@ fn configure_cors() -> Cors {
             "http://localhost:3000",
             format!(
                 "http://{}:{}",
-                env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
-                env::var("SERVER_PORT").unwrap_or("8181".to_string())
+                CONFIG.get().unwrap().server_address,
+                CONFIG.get().unwrap().server_port
             )
             .as_str(),
         ]),
@@ -91,8 +88,8 @@ async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Clien
         .manage(db_pool)
         .manage(client)
         .mount(
-            format!("/{}", PRODUCT_IMAGES),
-            rocket::fs::FileServer::from(PRODUCT_IMAGES),
+            format!("/{}", CONFIG.get().unwrap().dir_product_images.as_str()),
+            rocket::fs::FileServer::from(CONFIG.get().unwrap().dir_product_images.as_str()),
         )
         .mount(
             "/api",

@@ -11,16 +11,17 @@ mod mail;
 
 use crate::database::init_db_pool;
 use crate::server::set_up_rocket;
-use crate::utils::constants::images_constants::PRODUCT_IMAGES;
 use std::fs;
 use std::path::Path;
+use crate::utils::env_configuration::{EnvConfiguration, CONFIG};
 
 #[tokio::main]
 async fn main() {
+    EnvConfiguration::init_config();
     let db_pool = init_db_pool().await;
 
-    if !Path::new(PRODUCT_IMAGES).exists() {
-        fs::create_dir(PRODUCT_IMAGES).expect("Failed to create images directory");
+    if !Path::new(CONFIG.get().unwrap().dir_product_images.as_str()).exists() {
+        fs::create_dir(CONFIG.get().unwrap().dir_product_images.as_str()).expect("Failed to create images directory");
     }
 
     set_up_rocket(db_pool.unwrap()).await;

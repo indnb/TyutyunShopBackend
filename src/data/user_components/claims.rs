@@ -4,8 +4,8 @@ use rocket::http::Status;
 use rocket::request::FromRequest;
 use rocket::{request, Request};
 use serde::{Deserialize, Serialize};
-use std::env;
 use crate::error::api_error::ApiError;
+use crate::utils::env_configuration::CONFIG;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -16,7 +16,7 @@ pub struct Claims {
 
 impl Claims {
     pub fn check_admin(&self) -> Result<(), ApiError> {
-        if self.role.clone().unwrap_or(String::from("USER")) != env::var("ADMIN").unwrap_or("ADMIN".to_string()) {
+        if self.role.clone().unwrap_or(String::from("USER")) != CONFIG.get().unwrap().admin_role.clone() {
             return Err(ApiError::Unauthorized);
         }
         Ok(())
@@ -50,7 +50,7 @@ impl<'r> FromRequest<'r> for Claims {
 
         match token {
             Some(token) => {
-                let secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+                let secret = CONFIG.get().unwrap().jwt_secret.as_str();
 
                 match decode::<Claims>(
                     token,

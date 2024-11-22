@@ -1,28 +1,30 @@
+use crate::data::orders::order::OrderDetails;
 use crate::error::api_error::ApiError;
+use crate::utils::env_configuration::CONFIG;
 use lettre::message::{Message, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::SmtpTransport;
 use lettre::Transport;
-use std::env;
-use crate::data::orders::order::OrderDetails;
 
 pub fn generate_registration_link(token: String) -> String {
     format!(
         "http://{}:{}/api/registration?token={}",
-        env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
-        env::var("SERVER_PORT").unwrap_or("8181".to_string()),
+        CONFIG.get().unwrap().server_address,
+        CONFIG.get().unwrap().dir_product_images,
         token
     )
 }
 
 pub fn send_mail_registration(to_email: String, active_link: String) -> Result<String, ApiError> {
-    let smtp_server = env::var("SMTP_SERVER").map_err(|_| ApiError::EmailError)?;
-    let smtp_port: u16 = env::var("SMTP_PORT")
-        .unwrap_or("587".to_string())
+    let smtp_address = CONFIG.get().unwrap().smtp_address.as_str();
+    let smtp_port: u16 = CONFIG
+        .get()
+        .unwrap()
+        .smtp_port
         .parse()
         .map_err(|_| ApiError::EmailError)?;
-    let username = env::var("MAIL_USERNAME").map_err(|_| ApiError::EmailError)?;
-    let password = env::var("MAIL_PASSWORD").map_err(|_| ApiError::EmailError)?;
+    let username = CONFIG.get().unwrap().mail_username.as_str();
+    let password = CONFIG.get().unwrap().mail_password.as_str();
 
     let html_content = format!(
         r#"
@@ -87,8 +89,8 @@ pub fn send_mail_registration(to_email: String, active_link: String) -> Result<S
         .singlepart(SinglePart::html(html_content))
         .map_err(|_| ApiError::EmailError)?;
 
-    let creds = Credentials::new(username.clone(), password.clone());
-    let mailer = SmtpTransport::starttls_relay(&smtp_server)
+    let creds = Credentials::new(username.to_string(), password.to_string());
+    let mailer = SmtpTransport::starttls_relay(smtp_address)
         .map_err(|_| ApiError::EmailError)?
         .port(smtp_port)
         .credentials(creds)
@@ -102,30 +104,36 @@ pub fn send_mail_registration(to_email: String, active_link: String) -> Result<S
     ))
 }
 
-
 pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiError> {
-    let smtp_server = env::var("SMTP_SERVER").map_err(|_| ApiError::EmailError)?;
-    let smtp_port: u16 = env::var("SMTP_PORT")
-        .unwrap_or("587".to_string())
+    let smtp_address = CONFIG.get().unwrap().smtp_address.as_str();
+    let smtp_port: u16 = CONFIG
+        .get()
+        .unwrap()
+        .smtp_port
+        .as_str()
         .parse()
         .map_err(|_| ApiError::EmailError)?;
-    let username = env::var("MAIL_USERNAME").map_err(|_| ApiError::EmailError)?;
-    let password = env::var("MAIL_PASSWORD").map_err(|_| ApiError::EmailError)?;
+    let username = CONFIG.get().unwrap().mail_username.as_str();
+    let password = CONFIG.get().unwrap().mail_password.as_str();
 
-    let items_html = order_details.items.iter().map(|item| {
-        format!(
-            r#"<tr>
+    let items_html = order_details
+        .items
+        .iter()
+        .map(|item| {
+            format!(
+                r#"<tr>
                 <td>{}</td>
                 <td>{}</td>
                 <td>{}</td>
                 <td>{} грн</td>
             </tr>"#,
-            item.product_name,
-            item.quantity,
-            item.size.clone().unwrap_or_else(|| "N/A".to_string()),
-            item.total_price
-        )
-    }).collect::<String>();
+                item.product_name,
+                item.quantity,
+                item.size.clone().unwrap_or_else(|| "N/A".to_string()),
+                item.total_price
+            )
+        })
+        .collect::<String>();
 
     let html_content = format!(
         r#"
@@ -241,9 +249,12 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
         phone = order_details.shipping.phone_number,
         email = order_details.shipping.email,
         items = items_html,
-        total_price = order_details.items.iter().map(|item| item.total_price).sum::<f32>(),
+        total_price = order_details
+            .items
+            .iter()
+            .map(|item| item.total_price)
+            .sum::<f32>(),
     );
-
 
     let email = Message::builder()
         .from(
@@ -251,13 +262,17 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
                 .parse()
                 .map_err(|_| ApiError::EmailError)?,
         )
-        .to(order_details.shipping.email.parse().map_err(|_| ApiError::EmailError)?)
+        .to(order_details
+            .shipping
+            .email
+            .parse()
+            .map_err(|_| ApiError::EmailError)?)
         .subject("Деталі нового замовлення - Tyutyun Shop")
         .singlepart(SinglePart::html(html_content))
         .map_err(|_| ApiError::EmailError)?;
 
-    let creds = Credentials::new(username.clone(), password.clone());
-    let mailer = SmtpTransport::starttls_relay(&smtp_server)
+    let creds = Credentials::new(username.to_string(), password.to_string());
+    let mailer = SmtpTransport::starttls_relay(smtp_address)
         .map_err(|_| ApiError::EmailError)?
         .port(smtp_port)
         .credentials(creds)
@@ -270,4 +285,3 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
         order_details.shipping.email
     ))
 }
-
