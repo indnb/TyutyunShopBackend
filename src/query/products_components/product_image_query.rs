@@ -16,7 +16,7 @@ pub async fn create_product_image(
     image_form: Form<NewProductImage<'_>>,
     claims: Claims,
 ) -> Result<&'static str, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let product_image = image_form.into_inner();
 
     let image_filename = format!("{}.png", Uuid::new_v4());
@@ -92,7 +92,7 @@ pub async fn delete_product_image_by_id(
     id: i32,
     claims: Claims,
 ) -> Result<Json<String>, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let path = sqlx::query("SELECT image_url FROM product_images WHERE id = $1")
         .bind(id)
         .fetch_one(&**db_pool)
@@ -175,7 +175,7 @@ pub async fn update_product_image(
     product_image: Json<ProductImage>,
     claims: Claims,
 ) -> Result<String, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let product_image = product_image.into_inner();
 
     let mut tx = db_pool.begin().await?;

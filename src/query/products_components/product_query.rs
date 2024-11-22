@@ -11,7 +11,7 @@ pub async fn create_product(
     product: Json<Product>,
     claims: Claims,
 ) -> Result<Json<i32>, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let product = product.into_inner();
 
     let product_id = sqlx::query(
@@ -109,7 +109,7 @@ pub async fn product_update(
     product: Json<Product>,
     claims: Claims,
 ) -> Result<String, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let product = product.into_inner();
 
     let _ = query(
@@ -132,7 +132,7 @@ pub async fn product_update(
 }
 #[delete("/product/<id>")]
 pub async fn delete_product(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let _ = query(r#"
         DELETE FROM products
         WHERE id = $1

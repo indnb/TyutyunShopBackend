@@ -130,7 +130,8 @@ pub async fn update_profile(
     claims: Claims,
 ) -> Result<Json<&'static str>, ApiError> {
     let mut temp_user = user_data.into_inner();
-    if claims.role != Some("ADMIN".to_string()) {
+    println!("{:?}", &claims.role);
+    if claims.role.unwrap_or("USER".to_string()) != CONFIG.get().unwrap().admin_role {
         temp_user.role = Some("USER".to_string());
     }
     let user_exists = sqlx::query("SELECT id FROM users WHERE id = $1")

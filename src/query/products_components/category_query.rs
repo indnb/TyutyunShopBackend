@@ -91,7 +91,7 @@ pub async fn update_category_name(
 }
 #[delete("/category/<id>")]
 pub async fn delete_category_by_id(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     sqlx::query(
         r#"
         DELETE FROM categories

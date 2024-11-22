@@ -155,7 +155,7 @@ pub async fn update_order_status(
     id: i32,
     claims: Claims
 ) -> Result<String, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
 
     let status = status
         .get("status")
@@ -178,7 +178,7 @@ pub async fn update_order_status(
 }
 #[delete("/order/<id>")]
 pub async fn delete_order(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     sqlx::query(
         r#"
             DELETE FROM orders

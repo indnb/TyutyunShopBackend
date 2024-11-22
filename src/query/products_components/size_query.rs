@@ -11,7 +11,7 @@ pub async fn create_size(
     size: Json<Size>,
     claims: Claims,
 ) -> Result<&'static str, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let size = size.into_inner();
 
     let row = sqlx::query(
@@ -80,7 +80,7 @@ pub async fn update_size(
     size: Json<Size>,
     claims: Claims,
 ) -> Result<String, ApiError> {
-    claims.check_admin()?;
+    Claims::check_admin(db_pool, claims).await?;
     let size = size.into_inner();
 
     let _ = query(
