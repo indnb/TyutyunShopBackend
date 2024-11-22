@@ -28,10 +28,10 @@ pub async fn create_hoodie_black(user_test: &UserTest<'_>) -> Result<(), ApiErro
         &Size {
             product_id: 6,
             single_size: None,
-            s: Some(0),
-            m: Some(0),
-            l: Some(10),
-            xl: Some(20),
+            s: Some(100),
+            m: Some(100),
+            l: Some(100),
+            xl: Some(200),
             xxl: Some(0),
         },
     )

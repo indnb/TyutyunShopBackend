@@ -28,11 +28,11 @@ pub async fn create_t_shirt_black(user_test: &UserTest<'_>) -> Result<(), ApiErr
         &Size {
             product_id: 4,
             single_size: None,
-            s: Some(10),
-            m: Some(0),
-            l: Some(20),
-            xl: Some(20),
-            xxl: Some(1),
+            s: Some(100),
+            m: Some(100),
+            l: Some(100),
+            xl: Some(200),
+            xxl: Some(0),
         },
     )
     .await?;
@@ -63,11 +63,11 @@ pub async fn create_t_shirt_white(user_test: &UserTest<'_>) -> Result<(), ApiErr
         &Size {
             product_id: 5,
             single_size: None,
-            s: Some(0),
-            m: Some(10),
-            l: Some(0),
-            xl: Some(20),
-            xxl: Some(1),
+            s: Some(100),
+            m: Some(100),
+            l: Some(100),
+            xl: Some(200),
+            xxl: Some(0),
         },
     )
     .await?;
