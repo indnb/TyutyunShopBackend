@@ -10,7 +10,7 @@ pub fn generate_registration_link(token: String) -> String {
     format!(
         "http://{}:{}/api/registration?token={}",
         CONFIG.get().unwrap().server_address,
-        CONFIG.get().unwrap().dir_product_images,
+        CONFIG.get().unwrap().server_port,
         token
     )
 }
