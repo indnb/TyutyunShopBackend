@@ -44,7 +44,7 @@ pub fn send_mail_registration(to_email: String, active_link: String) -> Result<S
                         display: inline-block;
                         padding: 10px 20px;
                         font-size: 16px;
-                        color: #000000;
+                        color: #000000 !important;
                         background-color: #FFA500;
                         border: none;
                         border-radius: 5px;
@@ -140,6 +140,7 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
     <!DOCTYPE html>
     <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {{
                 background-color: #1c1c1c;
@@ -147,6 +148,8 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
                 font-family: 'Namu', sans-serif;
                 margin: 0;
                 padding: 20px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }}
             .container {{
                 max-width: 600px;
@@ -169,18 +172,21 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
             .details p {{
                 margin: 5px 0;
                 color: #e59400;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 10px;
-                background-color: #1111;
             }}
             th, td {{
                 border: 1px solid #FFA500;
                 padding: 12px;
                 text-align: center;
                 color: #e59400;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }}
             th {{
                 background-color: #FFA500;
@@ -207,6 +213,24 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
             .button:hover {{
                 background-color: #e59400;
                 color: #1a1a1a;
+            }}
+            @media (max-width: 600px) {{
+                body {{
+                    padding: 10px;
+                }}
+                .container {{
+                    padding: 15px;
+                }}
+                th, td {{
+                    font-size: 12px;
+                    padding: 8px;
+                }}
+                .header {{
+                    font-size: 20px;
+                }}
+                .details p {{
+                    font-size: 14px;
+                }}
             }}
         </style>
     </head>
