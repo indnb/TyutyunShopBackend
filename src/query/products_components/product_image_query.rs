@@ -10,11 +10,12 @@ use std::{env, fs};
 use tokio::fs::File;
 use uuid::Uuid;
 
-#[post("/product_image", data = "<image_form>")]
+#[post("/product_image?<position>", data = "<image_form>")]
 pub async fn create_product_image(
     db_pool: &State<PgPool>,
     image_form: Form<NewProductImage<'_>>,
     claims: Claims,
+    position: Option<i32>,
 ) -> Result<&'static str, ApiError> {
     Claims::check_admin(db_pool, claims).await?;
     let product_image = image_form.into_inner();
@@ -41,19 +42,40 @@ pub async fn create_product_image(
         .await
         .map_err(|_| ApiError::InternalServerError)?;
 
-    sqlx::query(
+    let mut tx = db_pool.begin().await.map_err(ApiError::DatabaseError)?;
+
+    let id = sqlx::query(
         r#"
             INSERT INTO product_images (
-             image_url, product_id, created_at, updated_at
+             image_url, product_id, position, created_at, updated_at
             )
-            VALUES($1, $2, NOW(), NOW())
+            VALUES($1, $2, $3, NOW(), NOW())
+            RETURNING id
         "#,
     )
     .bind(&image_filename)
     .bind(product_image.product_id)
-    .execute(&**db_pool)
+    .bind(position)
+    .fetch_one(&mut *tx)
     .await
     .map_err(ApiError::DatabaseError)?;
+
+    if position == Some(1) {
+        sqlx::query(
+            r#"
+            UPDATE products
+            SET primary_image_id = $1, updated_at = NOW()
+            WHERE id = $2
+            "#,
+        )
+        .bind(id.get::<i32, &str>("id"))
+        .bind(product_image.product_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(ApiError::DatabaseError)?;
+    }
+
+    tx.commit().await.map_err(ApiError::DatabaseError)?;
 
     Ok("Product successfully created")
 }

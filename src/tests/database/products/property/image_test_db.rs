@@ -29,7 +29,10 @@ pub async fn upload_image(
 
     let request = user_test
         .client
-        .post(format!("{}/api/product_image", user_test.base_url))
+        .post(format!(
+            "{}/api/product_image?position=null",
+            user_test.base_url
+        ))
         .header("Authorization", user_test.auth_header.as_str())
         .multipart(form);
 
