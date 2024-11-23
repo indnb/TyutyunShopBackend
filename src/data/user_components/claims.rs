@@ -1,3 +1,6 @@
+use crate::error::api_error::ApiError;
+use crate::query::user::user_query::get_user_role;
+use crate::utils::env_configuration::CONFIG;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use rocket::http::Status;
@@ -6,9 +9,6 @@ use rocket::{request, Request, State};
 use serde::{Deserialize, Serialize};
 use sqlx::Error::RowNotFound;
 use sqlx::PgPool;
-use crate::error::api_error::ApiError;
-use crate::query::user::user_query::get_user_role;
-use crate::utils::env_configuration::CONFIG;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -19,7 +19,12 @@ pub struct Claims {
 
 impl Claims {
     pub async fn check_admin(db_pool: &State<PgPool>, claims: Claims) -> Result<(), ApiError> {
-        if get_user_role(db_pool, claims).await.map_err(|_| ApiError::DatabaseError(RowNotFound))?.role != CONFIG.get().unwrap().admin_role.clone() {
+        if get_user_role(db_pool, claims)
+            .await
+            .map_err(|_| ApiError::DatabaseError(RowNotFound))?
+            .role
+            != CONFIG.get().unwrap().admin_role.clone()
+        {
             return Err(ApiError::Unauthorized);
         }
         Ok(())

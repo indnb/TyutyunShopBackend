@@ -37,7 +37,6 @@ pub struct JwtUser {
     pub exp: usize,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserProfile {
     pub id: Option<i32>,

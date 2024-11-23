@@ -1,12 +1,12 @@
 use crate::data::orders::order::{DataOrder, Order, OrderDetails, OrderItemDetails};
 use crate::data::orders::shipping::Shipping;
+use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
 use crate::query::orders::shipping_query::get_shipping_by_id;
 use rocket::serde::json::Json;
 use rocket::State;
 use serde_json::Value;
 use sqlx::{PgPool, Row};
-use crate::data::user_components::claims::Claims;
 
 #[post("/order", data = "<data_order>")]
 pub async fn place_new_order(
@@ -153,7 +153,7 @@ pub async fn update_order_status(
     db_pool: &State<PgPool>,
     status: Json<Value>,
     id: i32,
-    claims: Claims
+    claims: Claims,
 ) -> Result<String, ApiError> {
     Claims::check_admin(db_pool, claims).await?;
 
@@ -177,7 +177,11 @@ pub async fn update_order_status(
     Ok("Succeed update status".to_string())
 }
 #[delete("/order/<id>")]
-pub async fn delete_order(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
+pub async fn delete_order(
+    db_pool: &State<PgPool>,
+    id: i32,
+    claims: Claims,
+) -> Result<String, ApiError> {
     Claims::check_admin(db_pool, claims).await?;
     sqlx::query(
         r#"

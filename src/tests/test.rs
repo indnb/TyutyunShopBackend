@@ -9,14 +9,14 @@ mod test {
     use crate::tests::database::products::property::category_test_db::*;
     use crate::tests::database::products::t_shirt_test_db::*;
     use crate::tests::database::user_test_db::*;
+    use crate::utils::env_configuration::{EnvConfiguration, CONFIG};
     use reqwest::Client;
-    use std::path::Path;
-    use std::time::Duration;
-    use std::fs;
     use rocket::State;
     use sqlx::Error;
+    use std::fs;
+    use std::path::Path;
+    use std::time::Duration;
     use tokio::time::sleep;
-    use crate::utils::env_configuration::{EnvConfiguration, CONFIG};
 
     #[tokio::test]
     async fn bootstrap_test() -> Result<(), ApiError> {
@@ -27,7 +27,8 @@ mod test {
         let db_ref = &db_pool;
 
         if !Path::new(CONFIG.get().unwrap().dir_product_images.as_str()).exists() {
-            fs::create_dir(CONFIG.get().unwrap().dir_product_images.as_str()).expect("Failed to create images directory");
+            fs::create_dir(CONFIG.get().unwrap().dir_product_images.as_str())
+                .expect("Failed to create images directory");
         }
 
         tokio::spawn({
@@ -67,5 +68,4 @@ mod test {
 
         Ok(())
     }
-
 }

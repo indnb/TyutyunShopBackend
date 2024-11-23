@@ -131,11 +131,20 @@ pub async fn product_update(
     Ok("Product succeed update!".to_string())
 }
 #[delete("/product/<id>")]
-pub async fn delete_product(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
+pub async fn delete_product(
+    db_pool: &State<PgPool>,
+    id: i32,
+    claims: Claims,
+) -> Result<String, ApiError> {
     Claims::check_admin(db_pool, claims).await?;
-    let _ = query(r#"
+    let _ = query(
+        r#"
         DELETE FROM products
         WHERE id = $1
-    "#).bind(id).execute(&**db_pool).await?;
+    "#,
+    )
+    .bind(id)
+    .execute(&**db_pool)
+    .await?;
     Ok("Product was successfully deleted!".to_string())
 }

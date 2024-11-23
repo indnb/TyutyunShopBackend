@@ -1,6 +1,7 @@
 use crate::data::products_components::product_image::{NewProductImage, ProductImage};
 use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
+use crate::utils::env_configuration::CONFIG;
 use rocket::form::Form;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -8,7 +9,6 @@ use sqlx::{PgPool, Row};
 use std::{env, fs};
 use tokio::fs::File;
 use uuid::Uuid;
-use crate::utils::env_configuration::CONFIG;
 
 #[post("/product_image", data = "<image_form>")]
 pub async fn create_product_image(
@@ -20,9 +20,14 @@ pub async fn create_product_image(
     let product_image = image_form.into_inner();
 
     let image_filename = format!("{}.png", Uuid::new_v4());
-    let image_path = format!("{}/{}", CONFIG.get().unwrap().dir_product_images, image_filename);
+    let image_path = format!(
+        "{}/{}",
+        CONFIG.get().unwrap().dir_product_images,
+        image_filename
+    );
 
-    fs::create_dir_all(CONFIG.get().unwrap().dir_product_images.as_str()).map_err(|_| ApiError::InternalServerError)?;
+    fs::create_dir_all(CONFIG.get().unwrap().dir_product_images.as_str())
+        .map_err(|_| ApiError::InternalServerError)?;
 
     let mut file = File::create(&image_path)
         .await
@@ -187,11 +192,11 @@ pub async fn update_product_image(
         WHERE id = $2
         "#,
     )
-        .bind(product_image.product_id)
-        .bind(product_image.id)
-        .bind(product_image.position)
-        .execute(&mut *tx)
-        .await?;
+    .bind(product_image.product_id)
+    .bind(product_image.id)
+    .bind(product_image.position)
+    .execute(&mut *tx)
+    .await?;
 
     if product_image.position == Some(1) {
         sqlx::query(
@@ -201,10 +206,10 @@ pub async fn update_product_image(
             WHERE id = $2
             "#,
         )
-            .bind(product_image.id)
-            .bind(product_image.product_id)
-            .execute(&mut *tx)
-            .await?;
+        .bind(product_image.id)
+        .bind(product_image.product_id)
+        .execute(&mut *tx)
+        .await?;
 
         sqlx::query(
             r#"
@@ -213,10 +218,10 @@ pub async fn update_product_image(
             WHERE product_id = $1 AND id != $2 AND position = 1
             "#,
         )
-            .bind(product_image.product_id)
-            .bind(product_image.id)
-            .execute(&mut *tx)
-            .await?;
+        .bind(product_image.product_id)
+        .bind(product_image.id)
+        .execute(&mut *tx)
+        .await?;
     }
 
     tx.commit().await?;

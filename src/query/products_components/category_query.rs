@@ -1,9 +1,9 @@
 use crate::data::products_components::category::Category;
+use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
-use crate::data::user_components::claims::Claims;
 
 #[post("/category", data = "<category_data>")]
 pub async fn create_category(
@@ -90,7 +90,11 @@ pub async fn update_category_name(
     Ok("Category successfully updated".to_string())
 }
 #[delete("/category/<id>")]
-pub async fn delete_category_by_id(db_pool: &State<PgPool>, id: i32, claims: Claims) -> Result<String, ApiError> {
+pub async fn delete_category_by_id(
+    db_pool: &State<PgPool>,
+    id: i32,
+    claims: Claims,
+) -> Result<String, ApiError> {
     Claims::check_admin(db_pool, claims).await?;
     sqlx::query(
         r#"

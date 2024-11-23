@@ -1,8 +1,8 @@
 use rocket::http::Status;
 use rocket::response::{Responder, Response};
 use rocket::Request;
-use std::io::Cursor;
 use serde::Serialize;
+use std::io::Cursor;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -52,7 +52,7 @@ impl<'r> Responder<'r, 'static> for ApiError {
             error: status.to_string(),
             message: message.to_string(),
         })
-            .expect("Failed to serialize error body");
+        .expect("Failed to serialize error body");
 
         Response::build()
             .status(status)

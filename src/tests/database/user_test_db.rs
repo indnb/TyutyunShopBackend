@@ -1,12 +1,12 @@
+use crate::data::user_components::user::TempUser;
 use crate::error::api_error::ApiError;
+use crate::query::user::user_query::registration;
 use crate::tests::database::request_test_db::send_request;
+use crate::utils::env_configuration::CONFIG;
 use reqwest::Client;
 use rocket::serde::json::json;
 use rocket::State;
 use sqlx::PgPool;
-use crate::data::user_components::user::TempUser;
-use crate::query::user::user_query::registration;
-use crate::utils::env_configuration::CONFIG;
 
 pub struct UserTest<'a> {
     pub client: &'a Client,
@@ -15,7 +15,11 @@ pub struct UserTest<'a> {
 }
 impl UserTest<'_> {
     #[allow(dead_code)]
-    pub async fn new<'a>(db_pool: &'a State<PgPool>, client: &'a Client, base_url: &'a str) -> Result<UserTest<'a>, ApiError> {
+    pub async fn new<'a>(
+        db_pool: &'a State<PgPool>,
+        client: &'a Client,
+        base_url: &'a str,
+    ) -> Result<UserTest<'a>, ApiError> {
         Self::registration_admin(db_pool).await?;
         let auth_header = format!("Bearer {}", Self::user_login(client, base_url).await?);
 
@@ -56,7 +60,7 @@ impl UserTest<'_> {
     #[allow(dead_code)]
     async fn registration_admin(db_pool: &State<PgPool>) -> Result<(), ApiError> {
         let admin = TempUser {
-                username: "admin".to_string(),
+            username: "admin".to_string(),
             email: "admin".to_string(),
             password: Some(CONFIG.get().unwrap().admin_password.clone()),
             first_name: Some("admin".to_string()),

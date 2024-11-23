@@ -1,10 +1,9 @@
+use crate::utils::env_configuration::CONFIG;
 use eyre::Result;
 use sqlx::{postgres::PgPoolOptions, Connection, Executor, PgConnection, PgPool};
-use crate::utils::env_configuration::CONFIG;
 
 pub async fn init_db_pool() -> Result<PgPool> {
-    let main_database_url =
-        CONFIG.get().unwrap().main_database_url.as_str();
+    let main_database_url = CONFIG.get().unwrap().main_database_url.as_str();
     let database_url = CONFIG.get().unwrap().database_url.as_str();
     let db_name = CONFIG.get().unwrap().database_name.as_str();
 

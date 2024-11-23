@@ -4,10 +4,7 @@ use crate::tests::database::request_test_db::send_request;
 use crate::tests::database::user_test_db::UserTest;
 use rocket::serde::json::json;
 
-pub async fn create_product(
-    user_test: &UserTest<'_>,
-    product: &Product,
-) -> Result<(), ApiError> {
+pub async fn create_product(user_test: &UserTest<'_>, product: &Product) -> Result<(), ApiError> {
     let request = user_test
         .client
         .post(format!("{}/api/product", user_test.base_url))

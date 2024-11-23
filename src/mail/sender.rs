@@ -5,6 +5,7 @@ use lettre::message::{Message, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::SmtpTransport;
 use lettre::Transport;
+use std::fmt::Write;
 
 pub fn generate_registration_link(token: String) -> String {
     format!(
@@ -116,24 +117,23 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
     let username = CONFIG.get().unwrap().mail_username.as_str();
     let password = CONFIG.get().unwrap().mail_password.as_str();
 
-    let items_html = order_details
-        .items
-        .iter()
-        .map(|item| {
-            format!(
-                r#"<tr>
-                <td>{}</td>
-                <td>{}</td>
-                <td>{}</td>
-                <td>{} грн</td>
-            </tr>"#,
-                item.product_name,
-                item.quantity,
-                item.size.clone().unwrap_or_else(|| "N/A".to_string()),
-                item.total_price
-            )
-        })
-        .collect::<String>();
+    let mut items_html = String::new();
+    for item in &order_details.items {
+        write!(
+            items_html,
+            r#"<tr>
+            <td>{}</td>
+            <td>{}</td>
+            <td>{}</td>
+            <td>{} грн</td>
+        </tr>"#,
+            item.product_name,
+            item.quantity,
+            item.size.clone().unwrap_or_else(|| "N/A".to_string()),
+            item.total_price
+        )
+        .map_err(|_| ApiError::EmailError)?;
+    }
 
     let html_content = format!(
         r#"

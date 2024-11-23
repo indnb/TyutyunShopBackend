@@ -1,5 +1,6 @@
 extern crate rocket;
 
+use crate::query::mail::mail_query::new_order_receive;
 use crate::query::orders::orders_query::{
     delete_order, get_order_details, get_orders, place_new_order, update_order_status,
 };
@@ -7,10 +8,19 @@ use crate::query::orders::shipping_query::{add_shipping, get_shipping_by_id};
 use crate::query::products_components::category_query::{
     create_category, delete_category_by_id, get_categories, get_category, update_category_name,
 };
-use crate::query::products_components::product_image_query::{create_product_image, delete_product_image_by_id, get_all_product_images, get_one_product_image, update_product_image};
-use crate::query::products_components::product_query::{create_product, delete_product, get_products, product_update};
+use crate::query::products_components::product_image_query::{
+    create_product_image, delete_product_image_by_id, get_all_product_images,
+    get_one_product_image, update_product_image,
+};
+use crate::query::products_components::product_query::{
+    create_product, delete_product, get_products, product_update,
+};
 use crate::query::products_components::size_query::{create_size, get_size, update_size};
-use crate::query::user::user_query::{get_profile, get_user_role, login, registration_by_token, try_registration, update_password, update_profile};
+use crate::query::user::user_query::{
+    get_profile, get_user_role, login, registration_by_token, try_registration, update_password,
+    update_profile,
+};
+use crate::utils::env_configuration::CONFIG;
 use log::LevelFilter;
 use reqwest::Client;
 use rocket::figment::Figment;
@@ -18,8 +28,6 @@ use rocket::Config;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 use sqlx::PgPool;
 use std::net::IpAddr;
-use crate::query::mail::mail_query::new_order_receive;
-use crate::utils::env_configuration::CONFIG;
 
 pub async fn set_up_rocket(db_pool: PgPool) {
     configure_logging();
@@ -47,11 +55,17 @@ fn get_server_config() -> Result<Config, rocket::figment::Error> {
 }
 
 fn parse_address_port() -> (IpAddr, u16) {
-    let address = CONFIG.get().unwrap().server_address
+    let address = CONFIG
+        .get()
+        .unwrap()
+        .server_address
         .parse()
         .expect("Invalid IP address");
 
-    let port = CONFIG.get().unwrap().server_port
+    let port = CONFIG
+        .get()
+        .unwrap()
+        .server_port
         .parse()
         .expect("Invalid port number");
 
