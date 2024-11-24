@@ -7,6 +7,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
 use std::{env, fs};
+use sqlx::postgres::PgRow;
 use tokio::fs::File;
 use uuid::Uuid;
 
@@ -96,14 +97,7 @@ pub async fn get_one_product_image(
     .fetch_one(&**db_pool)
     .await
     .map_err(ApiError::DatabaseError)?;
-
-    let image_url: String = format!(
-        "http://{}:{}/{}/{}",
-        CONFIG.get().unwrap().server_address,
-        CONFIG.get().unwrap().server_port,
-        CONFIG.get().unwrap().dir_product_images,
-        row.get::<String, &str>("image_url")
-    );
+    let image_url: String = get_image_path(&row);
 
     Ok(Json(ProductImage {
         id: row.get("id"),
@@ -111,6 +105,24 @@ pub async fn get_one_product_image(
         product_id: row.get("product_id"),
         position: row.get("position"),
     }))
+}
+
+fn get_image_path(row: &PgRow) -> String {
+    if CONFIG.get().unwrap().local {
+        format!(
+            "http://{}:{}/{}/{}",
+            CONFIG.get().unwrap().server_address,
+            CONFIG.get().unwrap().server_port,
+            CONFIG.get().unwrap().dir_product_images,
+            row.get::<String, &str>("image_url")
+        )
+    } else {
+        format!(
+            "/{}/{}",
+            CONFIG.get().unwrap().dir_product_images,
+            row.get::<String, &str>("image_url")
+        )
+    }
 }
 
 #[delete("/product_image/<id>")]
@@ -182,13 +194,7 @@ pub async fn get_all_product_images(
         .iter()
         .map(|row| ProductImage {
             id: row.get("id"),
-            image_url: format!(
-                "http://{}:{}/{}/{}",
-                CONFIG.get().unwrap().server_address,
-                CONFIG.get().unwrap().server_port,
-                CONFIG.get().unwrap().dir_product_images,
-                row.get::<String, _>("image_url")
-            ),
+            image_url: get_image_path(&row),
             product_id,
             position: row.get("position"),
         })

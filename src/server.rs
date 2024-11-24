@@ -76,12 +76,20 @@ fn configure_cors() -> Cors {
     CorsOptions {
         allowed_origins: AllowedOrigins::some_exact(&[
             "http://localhost:3000",
-            format!(
+            &format!(
                 "http://{}:{}",
                 CONFIG.get().unwrap().server_address,
                 CONFIG.get().unwrap().server_port
-            )
-            .as_str(),
+            ),
+            &format!(
+                "https://{}",
+                CONFIG.get().unwrap().server_address
+            ),
+            &format!(
+                "https://{}:{}",
+                CONFIG.get().unwrap().server_address,
+                CONFIG.get().unwrap().server_port
+            ),
         ]),
         allowed_methods: vec!["GET", "POST", "PUT", "DELETE"]
             .into_iter()

@@ -11,6 +11,7 @@ use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
+use crate::utils::constants::routes::LOGIN;
 
 #[get("/user/role")]
 pub async fn get_user_role(
@@ -246,11 +247,11 @@ pub async fn registration_by_token(
         &Validation::new(Algorithm::HS256),
     ) {
         Ok(user) => user,
-        Err(_) => return Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")), //CHANGE IN PRODUCTION
+        Err(_) => return Ok(Redirect::to(format!("{}/", LOGIN))),
     };
     let current_time = chrono::Utc::now().timestamp() as usize;
     if decoded.claims.exp < current_time {
-        return Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")); //CHANGE IN PRODUCTION
+        return Ok(Redirect::to(format!("{}/", LOGIN)));
     }
 
     registration(
@@ -268,7 +269,7 @@ pub async fn registration_by_token(
     )
     .await?;
 
-    Ok(Redirect::to("http://localhost:3000/tyutyun.shop#/login")) //CHANGE IN PRODUCTION
+    Ok(Redirect::to(format!("{}/", LOGIN)))
 }
 
 #[post("/user/update_password?<old_password>&<new_password>")]

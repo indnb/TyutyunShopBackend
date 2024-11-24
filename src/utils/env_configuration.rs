@@ -16,6 +16,7 @@ pub struct EnvConfiguration {
     pub admin_role: String,
     pub admin_password: String,
     pub dir_product_images: String,
+    pub local: bool,
 }
 
 impl EnvConfiguration {
@@ -39,6 +40,8 @@ impl EnvConfiguration {
             admin_password: env::var("ADMIN_PASSWORD").unwrap_or("P@$$W0RD".to_string()),
             dir_product_images: env::var("DIR_PRODUCT_IMAGES")
                 .unwrap_or("product_images".to_string()),
+            local: env::var("LOCAL")
+                .unwrap_or("false".to_string()).parse::<bool>().unwrap_or(false),
         });
     }
 }
