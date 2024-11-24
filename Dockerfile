@@ -10,10 +10,10 @@ COPY src ./src
 
 RUN cargo build --release
 
-FROM debian:bullseye-slim
+FROM rust:1.82
 
-COPY --from=builder /usr/src/app/target/release/TyutyunShopBackend /usr/local/bin/
+COPY --from=builder /usr/src/app/target/release/TyutyunShopBackend /app/
 
 WORKDIR /app
 
-CMD ["/usr/local/bin/TyutyunShopBackend"]
+CMD ["/app/TyutyunShopBackend"]
