@@ -6,6 +6,7 @@ use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::SmtpTransport;
 use lettre::Transport;
 use std::fmt::Write;
+use crate::utils::constants::routes::MAIN_URL;
 
 pub fn generate_registration_link(token: String) -> String {
     if CONFIG.get().unwrap().local {
@@ -17,7 +18,8 @@ pub fn generate_registration_link(token: String) -> String {
         )
     } else {
         format!(
-            "https://tyutyunshop.yacode.dev/api/registration?token={}",
+            "{}/api/registration?token={}",
+            MAIN_URL,
             token
         )
     }
