@@ -73,24 +73,27 @@ fn parse_address_port() -> (IpAddr, u16) {
 }
 
 fn configure_cors() -> Cors {
-    CorsOptions {
-        allowed_origins: AllowedOrigins::some_exact(&[
-            "http://localhost:3000",
+    let exact = if CONFIG.get().unwrap().local {
+        &[
+            &"http://localhost:3000".to_string(),
             &format!(
                 "http://{}:{}",
                 CONFIG.get().unwrap().server_address,
                 CONFIG.get().unwrap().server_port
             ),
-            &format!(
-                "https://{}",
-                CONFIG.get().unwrap().server_address
-            ),
+        ]
+    } else {
+        &[
+            &format!("https://{}", CONFIG.get().unwrap().server_address),
             &format!(
                 "https://{}:{}",
                 CONFIG.get().unwrap().server_address,
                 CONFIG.get().unwrap().server_port
             ),
-        ]),
+        ]
+    };
+    CorsOptions {
+        allowed_origins: AllowedOrigins::some_exact(exact),
         allowed_methods: vec!["GET", "POST", "PUT", "DELETE"]
             .into_iter()
             .map(|s| s.parse().unwrap())
