@@ -14,4 +14,6 @@ FROM debian:bullseye-slim
 
 COPY --from=builder /usr/src/app/target/release/TyutyunShopBackend /usr/local/bin/
 
+WORKDIR /app
+
 CMD ["/usr/local/bin/TyutyunShopBackend"]
