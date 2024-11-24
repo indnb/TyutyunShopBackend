@@ -16,7 +16,10 @@ pub fn generate_registration_link(token: String) -> String {
             token
         )
     } else {
-        format!("/api/registration?token={}", token)
+        format!(
+            "https://tyutyunshop.yacode.dev/api/registration?token={}",
+            token
+        )
     }
 }
 

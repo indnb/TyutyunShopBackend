@@ -247,11 +247,11 @@ pub async fn registration_by_token(
         &Validation::new(Algorithm::HS256),
     ) {
         Ok(user) => user,
-        Err(_) => return Ok(Redirect::to(format!("{}/", LOGIN))),
+        Err(_) => return Ok(Redirect::to(format!("{}#/", LOGIN))),
     };
     let current_time = chrono::Utc::now().timestamp() as usize;
     if decoded.claims.exp < current_time {
-        return Ok(Redirect::to(format!("{}/", LOGIN)));
+        return Ok(Redirect::to(format!("{}#/", LOGIN)));
     }
 
     registration(
@@ -269,7 +269,7 @@ pub async fn registration_by_token(
     )
     .await?;
 
-    Ok(Redirect::to(format!("{}/", LOGIN)))
+    Ok(Redirect::to(format!("{}#/", LOGIN)))
 }
 
 #[post("/user/update_password?<old_password>&<new_password>")]
