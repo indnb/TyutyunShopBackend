@@ -28,6 +28,7 @@ use rocket::Config;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 use sqlx::PgPool;
 use std::net::IpAddr;
+use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 
 pub async fn set_up_rocket(db_pool: PgPool) {
     configure_logging();
@@ -98,8 +99,8 @@ async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Clien
         .manage(db_pool)
         .manage(client)
         .mount(
-            format!("/{}", CONFIG.get().unwrap().dir_product_images.as_str()),
-            rocket::fs::FileServer::from(CONFIG.get().unwrap().dir_product_images.as_str()),
+            format!("/{}", PATH_PRODUCT_IMAGES),
+            rocket::fs::FileServer::from(PATH_PRODUCT_IMAGES),
         )
         .mount(
             "/api",

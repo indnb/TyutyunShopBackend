@@ -3,7 +3,7 @@ use crate::data::user_components::claims::Claims;
 use crate::data::user_components::user::{JwtUser, TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
 use crate::mail::sender::{generate_registration_link, send_mail_registration};
-use crate::utils::constants::routes::LOGIN;
+use crate::utils::constants::routes::{LOGIN, MAIN_URL};
 use crate::utils::env_configuration::CONFIG;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -247,11 +247,11 @@ pub async fn registration_by_token(
         &Validation::new(Algorithm::HS256),
     ) {
         Ok(user) => user,
-        Err(_) => return Ok(Redirect::to(format!("{}#/", LOGIN))),
+        Err(_) => return Ok(Redirect::to(format!("{}#/{}", MAIN_URL, LOGIN))),
     };
     let current_time = chrono::Utc::now().timestamp() as usize;
     if decoded.claims.exp < current_time {
-        return Ok(Redirect::to(format!("{}#/", LOGIN)));
+        return Ok(Redirect::to(format!("{}#/{}", MAIN_URL, LOGIN)));
     }
 
     registration(
@@ -269,7 +269,7 @@ pub async fn registration_by_token(
     )
     .await?;
 
-    Ok(Redirect::to(format!("{}#/", LOGIN)))
+    Ok(Redirect::to(format!("{}#/{}", MAIN_URL, LOGIN)))
 }
 
 #[post("/user/update_password?<old_password>&<new_password>")]

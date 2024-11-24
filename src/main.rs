@@ -11,17 +11,18 @@ mod utils;
 
 use crate::database::init_db_pool;
 use crate::server::set_up_rocket;
-use crate::utils::env_configuration::{EnvConfiguration, CONFIG};
+use crate::utils::env_configuration::EnvConfiguration;
 use std::fs;
 use std::path::Path;
+use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 
 #[tokio::main]
 async fn main() {
     EnvConfiguration::init_config();
     let db_pool = init_db_pool().await;
 
-    if !Path::new(CONFIG.get().unwrap().dir_product_images.as_str()).exists() {
-        fs::create_dir(CONFIG.get().unwrap().dir_product_images.as_str())
+    if !Path::new(PATH_PRODUCT_IMAGES).exists() {
+        fs::create_dir(PATH_PRODUCT_IMAGES)
             .expect("Failed to create images directory");
     }
 

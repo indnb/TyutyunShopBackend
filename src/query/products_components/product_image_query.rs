@@ -10,6 +10,7 @@ use sqlx::{PgPool, Row};
 use std::{env, fs};
 use tokio::fs::File;
 use uuid::Uuid;
+use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 
 #[post("/product_image?<position>", data = "<image_form>")]
 pub async fn create_product_image(
@@ -24,11 +25,11 @@ pub async fn create_product_image(
     let image_filename = format!("{}.png", Uuid::new_v4());
     let image_path = format!(
         "{}/{}",
-        CONFIG.get().unwrap().dir_product_images,
+        PATH_PRODUCT_IMAGES,
         image_filename
     );
 
-    fs::create_dir_all(CONFIG.get().unwrap().dir_product_images.as_str())
+    fs::create_dir_all(PATH_PRODUCT_IMAGES)
         .map_err(|_| ApiError::InternalServerError)?;
 
     let mut file = File::create(&image_path)
@@ -113,13 +114,13 @@ fn get_image_path(row: &PgRow) -> String {
             "http://{}:{}/{}/{}",
             CONFIG.get().unwrap().server_address,
             CONFIG.get().unwrap().server_port,
-            CONFIG.get().unwrap().dir_product_images,
+            PATH_PRODUCT_IMAGES,
             row.get::<String, &str>("image_url")
         )
     } else {
         format!(
             "/{}/{}",
-            CONFIG.get().unwrap().dir_product_images,
+            PATH_PRODUCT_IMAGES,
             row.get::<String, &str>("image_url")
         )
     }
@@ -141,7 +142,7 @@ pub async fn delete_product_image_by_id(
 
     let absolute_path = env::current_dir()
         .expect("Failed to get current directory")
-        .join(CONFIG.get().unwrap().dir_product_images.as_str())
+        .join(PATH_PRODUCT_IMAGES)
         .join(path);
 
     let absolute_path_str = absolute_path

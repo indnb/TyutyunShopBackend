@@ -17,7 +17,6 @@ pub struct EnvConfiguration {
     pub jwt_secret: String,
     pub admin_role: String,
     pub admin_password: String,
-    pub dir_product_images: String,
     pub local: bool,
     pub server_url: String,
 }
@@ -42,8 +41,6 @@ impl EnvConfiguration {
             jwt_secret: env::var("JWT_SECRET").unwrap_or("JWT_SECRET".to_string()),
             admin_role: env::var("ADMIN_ROLE").unwrap_or("ROLE".to_string()),
             admin_password: env::var("ADMIN_PASSWORD").unwrap_or("P@$$W0RD".to_string()),
-            dir_product_images: env::var("DIR_PRODUCT_IMAGES")
-                .unwrap_or("product_images".to_string()),
             local: env::var("LOCAL")
                 .unwrap_or("false".to_string())
                 .parse::<bool>()

@@ -17,6 +17,7 @@ mod test {
     use std::path::Path;
     use std::time::Duration;
     use tokio::time::sleep;
+    use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 
     #[tokio::test]
     async fn bootstrap_test() -> Result<(), ApiError> {
@@ -26,8 +27,8 @@ mod test {
             .map_err(|_| ApiError::DatabaseError(Error::RowNotFound))?;
         let db_ref = &db_pool;
 
-        if !Path::new(CONFIG.get().unwrap().dir_product_images.as_str()).exists() {
-            fs::create_dir(CONFIG.get().unwrap().dir_product_images.as_str())
+        if !Path::new(PATH_PRODUCT_IMAGES).exists() {
+            fs::create_dir(PATH_PRODUCT_IMAGES)
                 .expect("Failed to create images directory");
         }
 
