@@ -3,9 +3,11 @@ use std::env;
 
 pub static CONFIG: OnceCell<EnvConfiguration> = OnceCell::new();
 pub struct EnvConfiguration {
-    pub main_database_url: String,
-    pub database_url: String,
     pub database_name: String,
+    pub database_host: String,
+    pub database_port: String,
+    pub database_user: String,
+    pub database_password: String,
     pub server_port: String,
     pub server_address: String,
     pub smtp_address: String,
@@ -23,11 +25,11 @@ impl EnvConfiguration {
     pub fn init_config() {
         dotenv::dotenv().ok();
         CONFIG.get_or_init(|| EnvConfiguration {
-            main_database_url: env::var("MAIN_DATABASE_URL")
-                .unwrap_or("postgres://postgres:postgres@localhost/postgres".to_string()),
-            database_url: env::var("DATABASE_URL")
-                .unwrap_or("postgres://postgres:postgres@localhost/database".to_string()),
-            database_name: env::var("DATABASE_NAME").unwrap_or("database".to_string()),
+            database_name: env::var("DATABASE_NAME").unwrap_or("postgres".to_string()),
+            database_host: env::var("DATABASE_HOST").unwrap_or("localhost".to_string()),
+            database_port: env::var("DATABASE_PORT").unwrap_or("postgres".to_string()),
+            database_user: env::var("DATABASE_USER").unwrap_or("postgres".to_string()),
+            database_password: env::var("DATABASE_PASSWORD").unwrap_or("postgres".to_string()),
             server_port: env::var("SERVER_PORT").unwrap_or(8181.to_string()),
             server_address: env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
             smtp_address: env::var("SMTP_ADDRESS").unwrap_or("mail.mail".to_string()),

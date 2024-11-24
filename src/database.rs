@@ -3,19 +3,29 @@ use eyre::Result;
 use sqlx::{postgres::PgPoolOptions, Connection, Executor, PgConnection, PgPool};
 
 pub async fn init_db_pool() -> Result<PgPool> {
-    let main_database_url = CONFIG.get().unwrap().main_database_url.as_str();
-    let database_url = CONFIG.get().unwrap().database_url.as_str();
-    let db_name = CONFIG.get().unwrap().database_name.as_str();
+    let database_name = CONFIG.get().unwrap().database_name.clone();
 
-    let mut main_conn = PgConnection::connect(main_database_url).await?;
+    let main_database_url = format!(
+        "postgres://{}:{}@{}:{}",
+        CONFIG.get().unwrap().database_user.clone(),
+        CONFIG.get().unwrap().database_password.clone(),
+        CONFIG.get().unwrap().database_host.clone(),
+        CONFIG.get().unwrap().database_port.clone()
+    );
+    let database_url = format!("{}/{}", main_database_url, database_name);
 
-    let db_check_query = format!("SELECT 1 FROM pg_database WHERE datname = '{}';", db_name);
+    let mut main_conn = PgConnection::connect(&main_database_url).await?;
+
+    let db_check_query = format!(
+        "SELECT 1 FROM pg_database WHERE datname = '{}';",
+        database_name
+    );
     let db_exists: Option<(i32,)> = sqlx::query_as(&db_check_query)
         .fetch_optional(&mut main_conn)
         .await?;
 
     if db_exists.is_none() {
-        sqlx::query(&format!("CREATE DATABASE {};", db_name))
+        sqlx::query(&format!("CREATE DATABASE \"{}\";", database_name))
             .execute(&mut main_conn)
             .await
             .expect("Failed to create database");
@@ -23,7 +33,7 @@ pub async fn init_db_pool() -> Result<PgPool> {
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(database_url)
+        .connect(&database_url)
         .await?;
 
     pool.execute(
