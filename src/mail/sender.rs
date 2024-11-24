@@ -8,12 +8,19 @@ use lettre::Transport;
 use std::fmt::Write;
 
 pub fn generate_registration_link(token: String) -> String {
-    format!(
-        "http://{}:{}/api/registration?token={}",
-        CONFIG.get().unwrap().server_address,
-        CONFIG.get().unwrap().server_port,
-        token
-    )
+    if CONFIG.get().unwrap().local {
+        format!(
+            "http://{}:{}/api/registration?token={}",
+            CONFIG.get().unwrap().server_address,
+            CONFIG.get().unwrap().server_port,
+            token
+        )
+    } else {
+        format!(
+            "/api/registration?token={}",
+            token
+        )
+    }
 }
 
 pub fn send_mail_registration(to_email: String, active_link: String) -> Result<String, ApiError> {

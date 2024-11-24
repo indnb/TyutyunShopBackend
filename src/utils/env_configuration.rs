@@ -41,7 +41,9 @@ impl EnvConfiguration {
             dir_product_images: env::var("DIR_PRODUCT_IMAGES")
                 .unwrap_or("product_images".to_string()),
             local: env::var("LOCAL")
-                .unwrap_or("false".to_string()).parse::<bool>().unwrap_or(false),
+                .unwrap_or("false".to_string())
+                .parse::<bool>()
+                .unwrap_or(false),
         });
     }
 }
