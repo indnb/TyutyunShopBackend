@@ -20,6 +20,7 @@ use crate::query::user::user_query::{
     get_profile, get_user_role, login, registration_by_token, try_registration, update_password,
     update_profile,
 };
+use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 use crate::utils::env_configuration::CONFIG;
 use log::LevelFilter;
 use reqwest::Client;
@@ -28,7 +29,6 @@ use rocket::Config;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 use sqlx::PgPool;
 use std::net::IpAddr;
-use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 
 pub async fn set_up_rocket(db_pool: PgPool) {
     configure_logging();

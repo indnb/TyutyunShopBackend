@@ -1,6 +1,7 @@
 use crate::data::products_components::product_image::{NewProductImage, ProductImage};
 use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
+use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 use crate::utils::env_configuration::CONFIG;
 use rocket::form::Form;
 use rocket::serde::json::Json;
@@ -10,7 +11,6 @@ use sqlx::{PgPool, Row};
 use std::{env, fs};
 use tokio::fs::File;
 use uuid::Uuid;
-use crate::utils::constants::routes::PATH_PRODUCT_IMAGES;
 
 #[post("/product_image?<position>", data = "<image_form>")]
 pub async fn create_product_image(
@@ -23,14 +23,9 @@ pub async fn create_product_image(
     let product_image = image_form.into_inner();
 
     let image_filename = format!("{}.png", Uuid::new_v4());
-    let image_path = format!(
-        "{}/{}",
-        PATH_PRODUCT_IMAGES,
-        image_filename
-    );
+    let image_path = format!("{}/{}", PATH_PRODUCT_IMAGES, image_filename);
 
-    fs::create_dir_all(PATH_PRODUCT_IMAGES)
-        .map_err(|_| ApiError::InternalServerError)?;
+    fs::create_dir_all(PATH_PRODUCT_IMAGES).map_err(|_| ApiError::InternalServerError)?;
 
     let mut file = File::create(&image_path)
         .await
