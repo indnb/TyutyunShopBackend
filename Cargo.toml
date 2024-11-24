@@ -1,7 +1,11 @@
 [package]
-name = "tyutyunserver"
+name = "TyutyunShopBackend"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "TyutyunShopBackend"
+path = "src/main.rs"
 
 [dependencies]
 jsonwebtoken = "9.3.0"
