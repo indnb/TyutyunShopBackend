@@ -1,0 +1,22 @@
+name: Build and Push
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Kaniko build
+        uses: aevea/action-kaniko@master
+        with:
+          image: tyutyunshop/tyutyunshop-backend
+          tag: ${{ github.ref_name }}
+          registry: ${{ secrets.HARBOR_URL }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+          cache: true
+          cache_registry: ${{ secrets.HARBOR_URL }}/tyutyunshop/tyutyunshop-backend/cache
