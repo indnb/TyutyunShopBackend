@@ -19,6 +19,7 @@ pub struct EnvConfiguration {
     pub admin_password: String,
     pub dir_product_images: String,
     pub local: bool,
+    pub server_url: String,
 }
 
 impl EnvConfiguration {
@@ -31,7 +32,8 @@ impl EnvConfiguration {
             database_user: env::var("DATABASE_USER").unwrap_or("postgres".to_string()),
             database_password: env::var("DATABASE_PASSWORD").unwrap_or("postgres".to_string()),
             server_port: env::var("SERVER_PORT").unwrap_or(8181.to_string()),
-            server_address: env::var("SERVER_ADDRESS").unwrap_or("127.0.0.1".to_string()),
+            server_address: env::var("SERVER_ADDRESS").unwrap_or("0.0.0.0".to_string()),
+            server_url: env::var("SERVER_URL").unwrap_or("tyutyunshop.yacode.dev".to_string()),
             smtp_address: env::var("SMTP_ADDRESS").unwrap_or("mail.mail".to_string()),
             smtp_port: env::var("SMTP_PORT").unwrap_or(587.to_string()),
             mail_username: env::var("MAIL_USERNAME")
