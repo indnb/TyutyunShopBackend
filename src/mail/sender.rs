@@ -1,12 +1,12 @@
 use crate::data::orders::order::OrderDetails;
 use crate::error::api_error::ApiError;
+use crate::utils::constants::routes::MAIN_URL;
 use crate::utils::env_configuration::CONFIG;
 use lettre::message::{Message, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::SmtpTransport;
 use lettre::Transport;
 use std::fmt::Write;
-use crate::utils::constants::routes::MAIN_URL;
 
 pub fn generate_registration_link(token: String) -> String {
     if CONFIG.get().unwrap().local {
@@ -17,11 +17,7 @@ pub fn generate_registration_link(token: String) -> String {
             token
         )
     } else {
-        format!(
-            "{}/api/registration?token={}",
-            MAIN_URL,
-            token
-        )
+        format!("{}/api/registration?token={}", MAIN_URL, token)
     }
 }
 
