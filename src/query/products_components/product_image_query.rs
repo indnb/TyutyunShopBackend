@@ -5,9 +5,9 @@ use crate::utils::env_configuration::CONFIG;
 use rocket::form::Form;
 use rocket::serde::json::Json;
 use rocket::State;
+use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
 use std::{env, fs};
-use sqlx::postgres::PgRow;
 use tokio::fs::File;
 use uuid::Uuid;
 
@@ -194,7 +194,7 @@ pub async fn get_all_product_images(
         .iter()
         .map(|row| ProductImage {
             id: row.get("id"),
-            image_url: get_image_path(&row),
+            image_url: get_image_path(row),
             product_id,
             position: row.get("position"),
         })

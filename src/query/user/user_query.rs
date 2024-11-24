@@ -3,6 +3,7 @@ use crate::data::user_components::claims::Claims;
 use crate::data::user_components::user::{JwtUser, TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
 use crate::mail::sender::{generate_registration_link, send_mail_registration};
+use crate::utils::constants::routes::LOGIN;
 use crate::utils::env_configuration::CONFIG;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -11,7 +12,6 @@ use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::State;
 use sqlx::{PgPool, Row};
-use crate::utils::constants::routes::LOGIN;
 
 #[get("/user/role")]
 pub async fn get_user_role(

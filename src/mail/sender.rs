@@ -16,10 +16,7 @@ pub fn generate_registration_link(token: String) -> String {
             token
         )
     } else {
-        format!(
-            "/api/registration?token={}",
-            token
-        )
+        format!("/api/registration?token={}", token)
     }
 }
 
