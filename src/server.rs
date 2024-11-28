@@ -4,7 +4,7 @@ use crate::query::mail::mail_query::new_order_receive;
 use crate::query::orders::orders_query::{
     delete_order, get_order_details, get_orders, place_new_order, update_order_status,
 };
-use crate::query::orders::shipping_query::{add_shipping, get_shipping_by_id};
+use crate::query::orders::shipping_query::get_shipping_by_id;
 use crate::query::products_components::category_query::{
     create_category, delete_category_by_id, get_categories, get_category, update_category_name,
 };
