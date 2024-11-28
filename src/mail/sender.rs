@@ -6,7 +6,7 @@ use lettre::message::{Message, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::SmtpTransport;
 use lettre::Transport;
-use std::fmt::Write;
+use std::fmt::{format, Write};
 
 pub fn generate_registration_link(token: String) -> String {
     if CONFIG.get().unwrap().local {
@@ -274,7 +274,7 @@ pub fn send_mail_new_order(order_details: OrderDetails) -> Result<String, ApiErr
     "#,
         first_name = order_details.shipping.first_name,
         last_name = order_details.shipping.last_name,
-        address = order_details.shipping.address,
+        address = format!("{}, {}", order_details.shipping.city, order_details.shipping.branch),
         phone = order_details.shipping.phone_number,
         email = order_details.shipping.email,
         items = items_html,

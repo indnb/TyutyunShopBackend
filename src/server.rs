@@ -124,7 +124,6 @@ async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Clien
                 delete_product_image_by_id,
                 get_orders,
                 get_shipping_by_id,
-                add_shipping,
                 get_order_details,
                 update_order_status,
                 delete_order,

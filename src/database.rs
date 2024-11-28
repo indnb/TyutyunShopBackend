@@ -106,12 +106,14 @@ pub async fn init_db_pool() -> Result<PgPool> {
                 CREATE TABLE IF NOT EXISTS shipping_addresses (
                     id SERIAL PRIMARY KEY,
                     order_id INT REFERENCES orders(id) ON DELETE CASCADE,
-                    address VARCHAR(255) NOT NULL,
+                    city VARCHAR(255) NOT NULL,
+                    branch VARCHAR(255) NOT NULL,
                     first_name VARCHAR(100),
                     last_name VARCHAR(100),
                     phone_number VARCHAR(20),
                     email VARCHAR(255),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS order_items (

@@ -24,6 +24,7 @@ pub struct OrderItemDetails {
 pub struct DataOrder {
     pub order: Order,
     pub order_items: Vec<OrderItem>,
+    pub shipping: Shipping,
 }
 #[derive(serde::Serialize)]
 pub struct OrderDetails {

@@ -2,18 +2,20 @@ use crate::data::orders::order::{DataOrder, Order, OrderDetails, OrderItemDetail
 use crate::data::orders::shipping::Shipping;
 use crate::data::user_components::claims::Claims;
 use crate::error::api_error::ApiError;
-use crate::query::orders::shipping_query::get_shipping_by_id;
+use crate::query::orders::shipping_query::{add_shipping, get_shipping_by_id};
 use rocket::serde::json::Json;
 use rocket::State;
+use rocket::time::macros::date;
 use serde_json::Value;
 use sqlx::{PgPool, Row};
+use crate::mail::sender::send_mail_new_order;
 
 #[post("/order", data = "<data_order>")]
 pub async fn place_new_order(
     db_pool: &State<PgPool>,
     data_order: Json<DataOrder>,
 ) -> Result<Json<Option<i32>>, ApiError> {
-    let data_order = data_order.into_inner();
+    let mut data_order = data_order.into_inner();
 
     let id: Option<i32> = sqlx::query(
         r#"
@@ -51,6 +53,10 @@ pub async fn place_new_order(
         .await
         .map_err(ApiError::DatabaseError)?;
     }
+    data_order.shipping.order_id = id.unwrap();
+    add_shipping(db_pool, Json(data_order.shipping)).await?;
+
+    send_mail_new_order(get_order_details(db_pool, id.unwrap()).await?.into_inner());
 
     Ok(Json(id))
 }
