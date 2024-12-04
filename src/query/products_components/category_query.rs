@@ -9,7 +9,9 @@ use sqlx::{PgPool, Row};
 pub async fn create_category(
     db_pool: &State<PgPool>,
     category_data: Json<Category>,
+    claims: Claims,
 ) -> Result<Json<&'static str>, ApiError> {
+    Claims::check_admin(db_pool, claims).await?;
     let category = category_data.into_inner();
 
     sqlx::query(
@@ -69,7 +71,9 @@ pub async fn update_category_name(
     db_pool: &State<PgPool>,
     name: Json<serde_json::Value>,
     id: i32,
+    claims: Claims,
 ) -> Result<String, ApiError> {
+    Claims::check_admin(db_pool, claims).await?;
     let name = name
         .get("name")
         .and_then(serde_json::Value::as_str)

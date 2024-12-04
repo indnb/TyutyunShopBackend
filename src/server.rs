@@ -1,6 +1,5 @@
 extern crate rocket;
 
-use crate::query::mail::mail_query::new_order_receive;
 use crate::query::orders::orders_query::{
     delete_order, get_order_details, get_orders, place_new_order, update_order_status,
 };
@@ -131,7 +130,6 @@ async fn build_rocket(db_pool: PgPool, config: Config, cors: Cors, client: Clien
                 delete_category_by_id,
                 try_registration,
                 registration_by_token,
-                new_order_receive,
                 product_update,
                 update_size,
                 update_product_image,
