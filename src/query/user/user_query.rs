@@ -2,6 +2,7 @@ use crate::data::user_components::authorization::{LoginRequest, LoginResponse, R
 use crate::data::user_components::claims::Claims;
 use crate::data::user_components::user::{JwtUser, TempUser, User, UserProfile};
 use crate::error::api_error::ApiError;
+use crate::error::api_error::ApiError::DatabaseError;
 use crate::mail::sender::{generate_registration_link, send_mail_registration};
 use crate::utils::constants::routes::{LOGIN, MAIN_URL};
 use crate::utils::env_configuration::CONFIG;
@@ -11,6 +12,7 @@ use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::State;
+use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
 
 #[get("/user/role")]
@@ -119,7 +121,7 @@ pub async fn registration(db_pool: &State<PgPool>, user_data: TempUser) -> Resul
         .bind(user_data.role.unwrap_or("USER".to_string()))
         .execute(&**db_pool)
         .await
-        .map_err(ApiError::DatabaseError)?;
+        .map_err(DatabaseError)?;
 
     Ok(())
 }
@@ -132,9 +134,11 @@ pub async fn update_profile(
 ) -> Result<Json<&'static str>, ApiError> {
     let mut temp_user = user_data.into_inner();
     temp_user.role = claims.role;
+
     if temp_user.role != Some(CONFIG.get().unwrap().admin_role.to_string()) {
         temp_user.role = Some("USER".to_string());
     }
+
     let user_exists = sqlx::query("SELECT id FROM users WHERE id = $1")
         .bind(claims.sub)
         .fetch_optional(&**db_pool)
@@ -145,7 +149,30 @@ pub async fn update_profile(
         return Err(ApiError::Unauthorized);
     }
 
-    sqlx::query(
+    let match_fields = sqlx::query(
+        r#"
+        SELECT
+            CASE
+                WHEN EXISTS (SELECT 1 FROM users WHERE email = $1 AND id != $4) THEN $1
+                WHEN EXISTS (SELECT 1 FROM users WHERE phone_number = $2 AND id != $4) THEN $2
+                WHEN EXISTS (SELECT 1 FROM users WHERE username = $3 AND id != $4) THEN $3
+                ELSE NULL
+            END as conflicted
+        "#,
+    )
+    .bind(&temp_user.email)
+    .bind(&temp_user.phone_number)
+    .bind(&temp_user.username)
+    .bind(claims.sub)
+    .fetch_optional(&**db_pool)
+    .await?;
+
+    println!("{:?}", match_fields);
+    if let Some(conflict) = check_error_field(&mut temp_user, match_fields) {
+        return Err(conflict);
+    }
+
+    let exist = sqlx::query(
         r#"
         UPDATE users
         SET username = $1,
@@ -157,21 +184,23 @@ pub async fn update_profile(
             role = $8,
             updated_at = NOW()
         WHERE id = $7
+        RETURNING *
         "#,
     )
-    .bind(temp_user.username)
-    .bind(temp_user.email)
-    .bind(temp_user.first_name)
-    .bind(temp_user.last_name)
-    .bind(temp_user.phone_number)
-    .bind(temp_user.address)
+    .bind(&temp_user.username)
+    .bind(&temp_user.email)
+    .bind(&temp_user.first_name)
+    .bind(&temp_user.last_name)
+    .bind(&temp_user.phone_number)
+    .bind(&temp_user.address)
     .bind(claims.sub)
-    .bind(temp_user.role.unwrap_or("USER".to_string()))
-    .execute(&**db_pool)
+    .bind(&temp_user.role.take().unwrap_or("USER".to_string()))
+    .fetch_optional(&**db_pool)
     .await?;
 
     Ok(Json("Data successfully updated"))
 }
+
 #[post("/user/try_registration", data = "<user_data>")]
 pub async fn try_registration(
     db_pool: &State<PgPool>,
@@ -191,19 +220,8 @@ pub async fn try_registration(
     .fetch_optional(&**db_pool)
     .await?;
 
-    if let Some(row) = exist {
-        let existing_email: String = row.get("email");
-        if existing_email == new_user.email {
-            return Err(ApiError::EmailError);
-        }
-        let existing_phone: String = row.get("phone_number");
-        if existing_phone == new_user.phone_number.clone().unwrap_or_default() {
-            return Err(ApiError::PhoneError);
-        }
-        let existing_username: String = row.get("username");
-        if existing_username == new_user.username {
-            return Err(ApiError::UsernameError);
-        }
+    if let Some(value) = check_error_field_by_tag(&mut new_user, exist) {
+        return Err(value);
     }
 
     let expiration = chrono::Utc::now()
@@ -233,6 +251,45 @@ pub async fn try_registration(
 
     send_mail_registration(new_user.email, generate_registration_link(token))?;
     Ok(())
+}
+
+fn check_error_field(new_user: &mut TempUser, exist: Option<PgRow>) -> Option<ApiError> {
+    if let Some(row) = exist {
+        let existing_conflict: Option<String> = match row.try_get("conflicted") {
+            Ok(conflicted) => Some(conflicted),
+            Err(_) => None,
+        };
+        if existing_conflict == Some(new_user.email.clone()) {
+            return Some(ApiError::EmailError);
+        }
+
+        if existing_conflict == Some(new_user.phone_number.clone().unwrap_or_default()) {
+            return Some(ApiError::PhoneError);
+        }
+
+        if existing_conflict == Some(new_user.username.clone()) {
+            return Some(ApiError::UsernameError);
+        }
+    }
+    None
+}
+
+fn check_error_field_by_tag(new_user: &mut TempUser, exist: Option<PgRow>) -> Option<ApiError> {
+    if let Some(row) = exist {
+        let existing_email: String = row.get("email");
+        if existing_email == new_user.email {
+            return Some(ApiError::EmailError);
+        }
+        let existing_phone: String = row.get("phone_number");
+        if existing_phone == new_user.phone_number.clone().unwrap_or_default() {
+            return Some(ApiError::PhoneError);
+        }
+        let existing_username: String = row.get("username");
+        if existing_username == new_user.username {
+            return Some(ApiError::UsernameError);
+        }
+    }
+    None
 }
 
 #[allow(dead_code)]
