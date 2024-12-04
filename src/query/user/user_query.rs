@@ -172,7 +172,7 @@ pub async fn update_profile(
         return Err(conflict);
     }
 
-    let exist = sqlx::query(
+    sqlx::query(
         r#"
         UPDATE users
         SET username = $1,
@@ -194,8 +194,8 @@ pub async fn update_profile(
     .bind(&temp_user.phone_number)
     .bind(&temp_user.address)
     .bind(claims.sub)
-    .bind(&temp_user.role.take().unwrap_or("USER".to_string()))
-    .fetch_optional(&**db_pool)
+    .bind(temp_user.role.take().unwrap_or("USER".to_string()))
+    .execute(&**db_pool)
     .await?;
 
     Ok(Json("Data successfully updated"))
